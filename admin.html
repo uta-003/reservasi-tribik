@@ -1,0 +1,37 @@
+<!-- admin.html -->
+<h2>Panel Loket Admin</h2>
+<div id="daftarMenunggu"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const supabase = supabase.createClient('URL_SUPABASE_ANDA', 'API_KEY_ANDA');
+
+  // 1. Ambil & Tampilkan Antrian Masuk
+  async function loadAntrian() {
+    const { data } = await supabase.from('antrian').select('*').eq('status', 'menunggu');
+    
+    let html = '';
+    data.forEach(item => {
+      html += `<div>
+        <strong>${item.nomor_antrian}</strong> - ${item.nama} (${item.kategori})
+        <button onclick="panggilAntrian('${item.id}')">Panggil Ke Loket 1</button>
+      </div>`;
+    });
+    document.getElementById('daftarMenunggu').innerHTML = html;
+  }
+
+  // 2. Ubah Status Antrian Menjadi 'dipanggil'
+  async function panggilAntrian(id) {
+    await supabase.from('antrian').update({ status: 'dipanggil', loket: '1' }).eq('id', id);
+    loadAntrian(); // Refresh daftar
+  }
+
+  // 3. Mendengarkan Input Baru Secara Realtime Dari Ambil Unit
+  supabase.channel('antrian-realtime')
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'antrian' }, () => {
+      loadAntrian(); // Otomatis refresh jika ada pelanggan baru
+    })
+    .subscribe();
+
+  loadAntrian();
+</script>
