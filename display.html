@@ -1,0 +1,30 @@
+<!-- display.html -->
+<h1 id="nomorSedangDipanggil">--</h1>
+<h3 id="loketTujuan">Loket --</h3>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const supabase = supabase.createClient('URL_SUPABASE_ANDA', 'API_KEY_ANDA');
+
+  // Mendengarkan Perubahan Data saat Admin Mengubah Status
+  supabase.channel('antrian-live')
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'antrian' }, payload => {
+      const dataBaru = payload.new;
+      
+      if (dataBaru.status === 'dipanggil') {
+        // Tampilkan ke Layar TV
+        document.getElementById('nomorSedangDipanggil').innerText = dataBaru.nomor_antrian;
+        document.getElementById('loketTujuan').innerText = 'Loket ' + dataBaru.loket;
+
+        // Bunyikan Suara Panggilan Otomatis
+        bunyikanPanggilan(dataBaru.nomor_antrian, dataBaru.loket);
+      }
+    })
+    .subscribe();
+
+  function bunyikanPanggilan(nomor, loket) {
+    const ucapan = new SpeechSynthesisUtterance(`Nomor antrian ${nomor}, silahkan menuju ke loket ${loket}`);
+    ucapan.lang = 'id-ID';
+    window.speechSynthesis.speak(ucapan);
+  }
+</script>
