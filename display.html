@@ -1,46 +1,209 @@
-// ... di dalam fungsi fetchLatestCalled ...
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Display Live Antrian - Balai Lelang Tribik</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #5E0006; color: #EED9B9; }
+    .glass-display {
+      background: rgba(155, 15, 6, 0.35);
+      backdrop-filter: blur(20px);
+      border: 2px solid #D53E0F;
+    }
+  </style>
+</head>
+<body class="min-h-screen p-6 flex flex-col justify-between relative">
 
-async function fetchLatestCalled() {
-  const { data, error } = await supabaseClient
-    .from('reservasi')
-    .select('*')
-    .eq('status', 'dipanggil');
+  <!-- Banner Pembuka Blokir Suara -->
+  <div id="audioOverlay" onclick="enableAudio()" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex flex-col items-center justify-center p-6 text-center cursor-pointer">
+    <div class="bg-[#9B0F06] border-2 border-[#D53E0F] p-8 rounded-3xl max-w-lg shadow-2xl space-y-4">
+      <div class="text-5xl">🔊</div>
+      <h2 class="text-2xl font-black text-[#EED9B9]">Klik Layar di Mana Saja</h2>
+      <p class="text-sm opacity-90 text-[#EED9B9]">Untuk mengaktifkan fitur Panggilan Suara Otomatis pada TV Display ini.</p>
+      <button class="px-6 py-3 bg-[#D53E0F] text-[#EED9B9] font-bold rounded-xl shadow-lg">
+        Aktifkan Suara Panggilan
+      </button>
+    </div>
+  </div>
 
-  if (error) return;
+  <!-- Header TV -->
+  <div class="flex justify-between items-center border-b border-[#D53E0F] pb-4">
+    <div>
+      <h1 class="text-3xl font-black text-[#EED9B9]">BALAI LELANG TRIBIK</h1>
+      <p class="text-sm opacity-75">Papan Informasi Panggilan Antrian Real-time</p>
+    </div>
+    <div class="flex items-center gap-4">
+      <div id="audioStatus" class="text-xs px-3 py-1 bg-yellow-600/50 rounded-full font-bold">🔇 Suara Belum Aktif</div>
+      <div id="clock" class="text-2xl font-bold text-[#EED9B9]">00:00:00</div>
+    </div>
+  </div>
 
-  // --- RESET DEFAULT KE KOSONG ---
-  // Memastikan semua kotak kembali ke status default setiap kali fungsi dipanggil
-  const elements = {
-    unit: { no: 'nomorUnit', nama: 'namaUnit', loket: 'loketUnit' },
-    bpkb: { no: 'nomorBpkb', nama: 'namaBpkb', loket: 'loketBpkb' },
-    pelunasan: { no: 'nomorPelunasan', nama: 'namaPelunasan', loket: 'loketPelunasan' }
-  };
-
-  Object.values(elements).forEach(el => {
-    document.getElementById(el.no).innerText = '--';
-    document.getElementById(el.nama).innerText = 'Menunggu Panggilan';
-    document.getElementById(el.loket).innerText = 'Loket: -';
-  });
-  // -------------------------------
-
-  // Jika ada data dari database, baru timpa teks default tersebut
-  if (data && data.length > 0) {
-    data.forEach(item => {
-      if (item.kategori === 'unit') {
-        document.getElementById('nomorUnit').innerText = item.nomor_antrian;
-        document.getElementById('namaUnit').innerText = item.nama;
-        document.getElementById('loketUnit').innerText = `Loket ${item.loket || '1'}`;
-      } else if (item.kategori === 'bpkb') {
-        document.getElementById('nomorBpkb').innerText = item.nomor_antrian;
-        document.getElementById('namaBpkb').innerText = item.nama;
-        document.getElementById('loketBpkb').innerText = `Loket ${item.loket || '1'}`;
-      } else if (item.kategori === 'pelunasan') {
-        document.getElementById('nomorPelunasan').innerText = item.nomor_antrian;
-        document.getElementById('namaPelunasan').innerText = item.nama;
-        document.getElementById('loketPelunasan').innerText = `Loket ${item.loket || '1'}`;
-      }
-    });
+  <!-- Bento Grid Main Display (3 Kategori Layanan) -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 my-auto">
     
-    // ... (logika suara tetap sama seperti sebelumnya) ...
-  }
-}
+    <!-- 1. Pengambilan Unit -->
+    <div class="glass-display p-6 rounded-3xl text-center space-y-4 shadow-2xl flex flex-col justify-between">
+      <span class="text-xs font-bold uppercase tracking-widest bg-[#D53E0F] text-[#EED9B9] px-4 py-1.5 rounded-full inline-block mx-auto">
+        Pengambilan Unit
+      </span>
+      <div>
+        <div id="nomorUnit" class="text-7xl font-black text-[#EED9B9] tracking-widest my-2">--</div>
+        <div id="namaUnit" class="text-lg font-bold text-[#EED9B9] opacity-80 truncate">Tidak ada antrian</div>
+      </div>
+      <div id="loketUnit" class="text-xl font-extrabold text-[#D53E0F] bg-[#5E0006]/50 py-2 rounded-xl border border-[#D53E0F]/40">
+        Loket: -
+      </div>
+    </div>
+
+    <!-- 2. Pengambilan BPKB -->
+    <div class="glass-display p-6 rounded-3xl text-center space-y-4 shadow-2xl flex flex-col justify-between">
+      <span class="text-xs font-bold uppercase tracking-widest bg-[#D53E0F] text-[#EED9B9] px-4 py-1.5 rounded-full inline-block mx-auto">
+        Pengambilan BPKB
+      </span>
+      <div>
+        <div id="nomorBpkb" class="text-7xl font-black text-[#EED9B9] tracking-widest my-2">--</div>
+        <div id="namaBpkb" class="text-lg font-bold text-[#EED9B9] opacity-80 truncate">Tidak ada antrian</div>
+      </div>
+      <div id="loketBpkb" class="text-xl font-extrabold text-[#D53E0F] bg-[#5E0006]/50 py-2 rounded-xl border border-[#D53E0F]/40">
+        Loket: -
+      </div>
+    </div>
+
+    <!-- 3. Pelunasan -->
+    <div class="glass-display p-6 rounded-3xl text-center space-y-4 shadow-2xl flex flex-col justify-between">
+      <span class="text-xs font-bold uppercase tracking-widest bg-[#D53E0F] text-[#EED9B9] px-4 py-1.5 rounded-full inline-block mx-auto">
+        Pelunasan
+      </span>
+      <div>
+        <div id="nomorPelunasan" class="text-7xl font-black text-[#EED9B9] tracking-widest my-2">--</div>
+        <div id="namaPelunasan" class="text-lg font-bold text-[#EED9B9] opacity-80 truncate">Tidak ada antrian</div>
+      </div>
+      <div id="loketPelunasan" class="text-xl font-extrabold text-[#D53E0F] bg-[#5E0006]/50 py-2 rounded-xl border border-[#D53E0F]/40">
+        Loket: -
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Status Koneksi & Running Text -->
+  <div class="space-y-3">
+    <div class="flex justify-between items-center px-2">
+      <div class="text-xs opacity-75">Harap menyiapkan dokumen persyaratan sebelum menuju ke loket panggilan.</div>
+      <div id="connectionStatus" class="text-green-400 font-bold text-xs">● Terhubung Real-Time</div>
+    </div>
+    <div class="bg-[#9B0F06] p-3 rounded-xl border border-[#D53E0F] text-center font-bold text-sm">
+      Selamat Datang di Balai Lelang Tribik - Utamakan Ketertiban dan Keselamatan.
+    </div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://oapbpywsvgzegrhfhghn.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_2e3hma5Eo6DXz6_i034kDQ_rQl9lOhK';
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let audioEnabled = false;
+    let lastActiveIds = {
+      unit: null,
+      bpkb: null,
+      pelunasan: null
+    };
+
+    function enableAudio() {
+      audioEnabled = true;
+      document.getElementById('audioOverlay').classList.add('hidden');
+      document.getElementById('audioStatus').innerText = '🔊 Suara Aktif';
+      document.getElementById('audioStatus').className = 'text-xs px-3 py-1 bg-green-600/50 rounded-full font-bold';
+      bunyiPanggilan('Sistem suara aktif', '');
+    }
+
+    setInterval(() => {
+      document.getElementById('clock').innerText = new Date().toLocaleTimeString('id-ID');
+    }, 1000);
+
+    function bunyiPanggilan(teksPesan, loket) {
+      if (!audioEnabled || !('speechSynthesis' in window)) return;
+      window.speechSynthesis.cancel();
+      
+      let teks = loket ? `Nomor antrian ${teksPesan}, silakan menuju ke loket ${loket}` : teksPesan;
+      const uttr = new SpeechSynthesisUtterance(teks);
+      uttr.lang = 'id-ID';
+      uttr.rate = 0.85;
+      window.speechSynthesis.speak(uttr);
+    }
+
+    async function fetchLatestCalled() {
+      const { data, error } = await supabaseClient
+        .from('reservasi')
+        .select('*')
+        .eq('status', 'dipanggil');
+
+      if (error) return;
+
+      // Reset semua tampilan ke default (menyamakan semuanya ke format kosong)
+      document.getElementById('nomorUnit').innerText = '--';
+      document.getElementById('namaUnit').innerText = 'Tidak ada antrian';
+      document.getElementById('loketUnit').innerText = 'Loket: -';
+
+      document.getElementById('nomorBpkb').innerText = '--';
+      document.getElementById('namaBpkb').innerText = 'Tidak ada antrian';
+      document.getElementById('loketBpkb').innerText = 'Loket: -';
+
+      document.getElementById('nomorPelunasan').innerText = '--';
+      document.getElementById('namaPelunasan').innerText = 'Tidak ada antrian';
+      document.getElementById('loketPelunasan').innerText = 'Loket: -';
+
+      let currentActiveOnServer = { unit: null, bpkb: null, pelunasan: null };
+
+      if (data && data.length > 0) {
+        data.forEach(item => {
+          if (item.kategori === 'unit') {
+            currentActiveOnServer.unit = item;
+            document.getElementById('nomorUnit').innerText = item.nomor_antrian;
+            document.getElementById('namaUnit').innerText = item.nama;
+            document.getElementById('loketUnit').innerText = `Loket ${item.loket || '1'}`;
+          } else if (item.kategori === 'bpkb') {
+            currentActiveOnServer.bpkb = item;
+            document.getElementById('nomorBpkb').innerText = item.nomor_antrian;
+            document.getElementById('namaBpkb').innerText = item.nama;
+            document.getElementById('loketBpkb').innerText = `Loket ${item.loket || '1'}`;
+          } else if (item.kategori === 'pelunasan') {
+            currentActiveOnServer.pelunasan = item;
+            document.getElementById('nomorPelunasan').innerText = item.nomor_antrian;
+            document.getElementById('namaPelunasan').innerText = item.nama;
+            document.getElementById('loketPelunasan').innerText = `Loket ${item.loket || '1'}`;
+          }
+        });
+      }
+
+      // Validasi dan eksekusi suara secara aman per kategori
+      ['unit', 'bpkb', 'pelunasan'].forEach(kat => {
+        let activeItem = currentActiveOnServer[kat];
+        if (activeItem) {
+          if (lastActiveIds[kat] !== activeItem.id) {
+            lastActiveIds[kat] = activeItem.id;
+            setTimeout(() => {
+              bunyiPanggilan(activeItem.nomor_antrian, activeItem.loket || '1');
+            }, 300);
+          }
+        } else {
+          lastActiveIds[kat] = null;
+        }
+      });
+    }
+
+    supabaseClient.channel('display-channel')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'reservasi' }, () => {
+        fetchLatestCalled();
+      })
+      .subscribe();
+
+    setInterval(fetchLatestCalled, 2000);
+    fetchLatestCalled();
+  </script>
+</body>
+</html>
+```[cite: 1]
