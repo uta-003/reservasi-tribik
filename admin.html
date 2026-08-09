@@ -61,9 +61,8 @@
             </button>
           </div>
           
-          <!-- Tombol Reset Setelan Pabrik -->
           <button onclick="resetSetelanPabrik()" class="w-full py-3 bg-red-950/80 hover:bg-red-900 text-red-200 border border-red-700 font-bold rounded-xl text-xs uppercase tracking-wider transition-all">
-            ⚠️ Reset Antrian (Setelan Pabrik)
+            ⚠️ Reset Semua Antrian (Setelan Pabrik)
           </button>
         </div>
       </div>
@@ -101,10 +100,16 @@
               <span class="text-xs ml-2 opacity-75">(${item.nama})</span>
               <div class="text-[10px] uppercase text-[#D53E0F] font-semibold">${item.kategori}</div>
             </div>
-            <button onclick="panggilAntrian(${item.id}, '${item.nomor_antrian}', '${item.nama}')" 
-                    class="px-4 py-2 bg-[#D53E0F] text-[#EED9B9] font-bold text-xs rounded-lg hover:bg-[#9B0F06]">
-              Panggil
-            </button>
+            <div class="flex items-center gap-2">
+              <button onclick="panggilAntrian(${item.id}, '${item.nomor_antrian}', '${item.nama}')" 
+                      class="px-3 py-2 bg-[#D53E0F] text-[#EED9B9] font-bold text-xs rounded-lg hover:bg-[#9B0F06]">
+                Panggil
+              </button>
+              <button onclick="hapusSatuAntrian(${item.id}, '${item.nomor_antrian}')" 
+                      class="px-3 py-2 bg-red-900/80 text-red-200 hover:bg-red-800 font-bold text-xs rounded-lg border border-red-600">
+                Hapus
+              </button>
+            </div>
           `;
           container.appendChild(div);
         });
@@ -139,6 +144,21 @@
 
       if (!error) {
         loadData();
+      }
+    }
+
+    async function hapusSatuAntrian(id, nomor) {
+      if (!confirm(`Hapus nomor antrian ${nomor}?`)) return;
+
+      const { error } = await supabaseClient
+        .from('reservasi')
+        .delete()
+        .eq('id', id);
+
+      if (!error) {
+        loadData();
+      } else {
+        alert('Gagal menghapus: ' + error.message);
       }
     }
 
