@@ -13,7 +13,7 @@
   </style>
 </head>
 <body class="p-6 min-h-screen">
-  <div class="max-w-6xl mx-auto space-y-6">
+  <div class="max-w-7xl mx-auto space-y-6">
     
     <!-- Header Admin -->
     <div class="flex justify-between items-center glass-box p-5 rounded-2xl">
@@ -32,40 +32,83 @@
     </div>
 
     <!-- Layout Grid Admin -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      
       <!-- Daftar Antrian Menunggu -->
       <div class="glass-box p-5 rounded-2xl space-y-4">
         <h2 class="font-bold text-lg text-[#EED9B9] border-b border-[#D53E0F] pb-2">Daftar Antrian Menunggu</h2>
-        <div id="daftarAntrian" class="space-y-3 max-h-[500px] overflow-y-auto pr-2">
+        <div id="daftarAntrian" class="space-y-3 max-h-[550px] overflow-y-auto pr-2">
           <p class="text-sm opacity-50">Memuat data antrian...</p>
         </div>
       </div>
 
-      <!-- Detail Antrian Dipanggil -->
-      <div class="glass-box p-5 rounded-2xl flex flex-col justify-between space-y-6">
-        <div>
-          <h2 class="font-bold text-lg text-[#EED9B9] border-b border-[#D53E0F] pb-2">Sedang Dilayani Saat Ini</h2>
-          <div id="aktifBox" class="text-center py-10 space-y-3">
-            <div id="aktifNomor" class="text-6xl font-black text-[#D53E0F]">--</div>
-            <div id="aktifNama" class="text-xl font-medium text-[#EED9B9]">Belum ada antrian dipanggil</div>
+      <!-- 3 Tampilan Sedang Diproses Berdasarkan Kategori -->
+      <div class="space-y-6">
+        
+        <h2 class="font-bold text-lg text-[#EED9B9] border-b border-[#D53E0F] pb-2">Sedang Dilayani Saat Ini (3 Kategori)</h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <!-- 1. Unit -->
+          <div class="glass-box p-4 rounded-2xl text-center flex flex-col justify-between space-y-3">
+            <span class="text-[10px] font-bold uppercase tracking-wider bg-[#D53E0F] text-[#EED9B9] px-2 py-1 rounded-full">Unit</span>
+            <div>
+              <div id="aktifNomorUnit" class="text-3xl font-black text-[#EED9B9]">--</div>
+              <div id="aktifNamaUnit" class="text-xs opacity-80 truncate mt-1">Tidak ada</div>
+            </div>
+            <div class="space-y-2">
+              <button onclick="panggilUlangKategori('unit')" class="w-full py-1.5 bg-[#D53E0F] hover:bg-[#9B0F06] text-[#EED9B9] font-bold text-xs rounded-lg shadow">
+                🔊 Panggil Suara
+              </button>
+              <button onclick="selesaikanAntrianKategori('unit')" class="w-full py-1.5 bg-green-700 hover:bg-green-800 text-white font-bold text-xs rounded-lg shadow">
+                Selesai
+              </button>
+            </div>
+          </div>
+
+          <!-- 2. BPKB -->
+          <div class="glass-box p-4 rounded-2xl text-center flex flex-col justify-between space-y-3">
+            <span class="text-[10px] font-bold uppercase tracking-wider bg-[#D53E0F] text-[#EED9B9] px-2 py-1 rounded-full">BPKB</span>
+            <div>
+              <div id="aktifNomorBpkb" class="text-3xl font-black text-[#EED9B9]">--</div>
+              <div id="aktifNamaBpkb" class="text-xs opacity-80 truncate mt-1">Tidak ada</div>
+            </div>
+            <div class="space-y-2">
+              <button onclick="panggilUlangKategori('bpkb')" class="w-full py-1.5 bg-[#D53E0F] hover:bg-[#9B0F06] text-[#EED9B9] font-bold text-xs rounded-lg shadow">
+                🔊 Panggil Suara
+              </button>
+              <button onclick="selesaikanAntrianKategori('bpkb')" class="w-full py-1.5 bg-green-700 hover:bg-green-800 text-white font-bold text-xs rounded-lg shadow">
+                Selesai
+              </button>
+            </div>
+          </div>
+
+          <!-- 3. Pelunasan -->
+          <div class="glass-box p-4 rounded-2xl text-center flex flex-col justify-between space-y-3">
+            <span class="text-[10px] font-bold uppercase tracking-wider bg-[#D53E0F] text-[#EED9B9] px-2 py-1 rounded-full">Pelunasan</span>
+            <div>
+              <div id="aktifNomorPelunasan" class="text-3xl font-black text-[#EED9B9]">--</div>
+              <div id="aktifNamaPelunasan" class="text-xs opacity-80 truncate mt-1">Tidak ada</div>
+            </div>
+            <div class="space-y-2">
+              <button onclick="panggilUlangKategori('pelunasan')" class="w-full py-1.5 bg-[#D53E0F] hover:bg-[#9B0F06] text-[#EED9B9] font-bold text-xs rounded-lg shadow">
+                🔊 Panggil Suara
+              </button>
+              <button onclick="selesaikanAntrianKategori('pelunasan')" class="w-full py-1.5 bg-green-700 hover:bg-green-800 text-white font-bold text-xs rounded-lg shadow">
+                Selesai
+              </button>
+            </div>
           </div>
         </div>
 
-        <div class="space-y-3">
-          <div class="grid grid-cols-2 gap-3">
-            <button onclick="selesaikanAntrian()" class="py-3 bg-green-700 hover:bg-green-800 text-white font-bold rounded-xl shadow">
-              Selesai
-            </button>
-            <button onclick="panggilUlang()" class="py-3 bg-[#D53E0F] hover:bg-[#9B0F06] text-[#EED9B9] font-bold rounded-xl shadow">
-              Panggil Ulang Suara
-            </button>
-          </div>
-          
+        <!-- Tombol Aksi Global -->
+        <div class="glass-box p-5 rounded-2xl space-y-3">
           <button onclick="resetSetelanPabrik()" class="w-full py-3 bg-red-950/80 hover:bg-red-900 text-red-200 border border-red-700 font-bold rounded-xl text-xs uppercase tracking-wider transition-all">
             ⚠️ Reset Semua Antrian (Setelan Pabrik)
           </button>
         </div>
+
       </div>
+
     </div>
 
   </div>
@@ -75,7 +118,11 @@
     const SUPABASE_KEY = 'sb_publishable_2e3hma5Eo6DXz6_i034kDQ_rQl9lOhK';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    let currentActiveId = null;
+    let activeData = {
+      unit: null,
+      bpkb: null,
+      pelunasan: null
+    };
 
     async function loadData() {
       // 1. Ambil daftar antrian menunggu
@@ -101,7 +148,7 @@
               <div class="text-[10px] uppercase text-[#D53E0F] font-semibold">${item.kategori}</div>
             </div>
             <div class="flex items-center gap-2">
-              <button onclick="panggilAntrian(${item.id}, '${item.nomor_antrian}', '${item.nama}')" 
+              <button onclick="panggilAntrian(${item.id}, '${item.kategori}')" 
                       class="px-3 py-2 bg-[#D53E0F] text-[#EED9B9] font-bold text-xs rounded-lg hover:bg-[#9B0F06]">
                 Panggil
               </button>
@@ -115,32 +162,81 @@
         });
       }
 
-      // 2. Ambil antrian yang sedang dipanggil
+      // 2. Ambil semua antrian yang sedang berstatus 'dipanggil'
       const { data: dataDipanggil } = await supabaseClient
         .from('reservasi')
         .select('*')
-        .eq('status', 'dipanggil')
-        .order('id', { ascending: false })
-        .limit(1);
+        .eq('status', 'dipanggil');
+
+      activeData = { unit: null, bpkb: null, pelunasan: null };
+      
+      document.getElementById('aktifNomorUnit').innerText = '--';
+      document.getElementById('aktifNamaUnit').innerText = 'Tidak ada';
+      document.getElementById('aktifNomorBpkb').innerText = '--';
+      document.getElementById('aktifNamaBpkb').innerText = 'Tidak ada';
+      document.getElementById('aktifNomorPelunasan').innerText = '--';
+      document.getElementById('aktifNamaPelunasan').innerText = 'Tidak ada';
 
       if (dataDipanggil && dataDipanggil.length > 0) {
-        currentActiveId = dataDipanggil[0].id;
-        document.getElementById('aktifNomor').innerText = dataDipanggil[0].nomor_antrian;
-        document.getElementById('aktifNama').innerText = dataDipanggil[0].nama;
-      } else {
-        currentActiveId = null;
-        document.getElementById('aktifNomor').innerText = '--';
-        document.getElementById('aktifNama').innerText = 'Tidak Ada Antrian Dipanggil';
+        dataDipanggil.forEach(item => {
+          if (item.kategori === 'unit') {
+            activeData.unit = item;
+            document.getElementById('aktifNomorUnit').innerText = item.nomor_antrian;
+            document.getElementById('aktifNamaUnit').innerText = item.nama;
+          } else if (item.kategori === 'bpkb') {
+            activeData.bpkb = item;
+            document.getElementById('aktifNomorBpkb').innerText = item.nomor_antrian;
+            document.getElementById('aktifNamaBpkb').innerText = item.nama;
+          } else if (item.kategori === 'pelunasan') {
+            activeData.pelunasan = item;
+            document.getElementById('aktifNomorPelunasan').innerText = item.nomor_antrian;
+            document.getElementById('aktifNamaPelunasan').innerText = item.nama;
+          }
+        });
       }
     }
 
-    async function panggilAntrian(id, nomor, nama) {
+    async function panggilAntrian(id, kategori) {
       const loket = document.getElementById('selectLoket').value;
 
       const { error } = await supabaseClient
         .from('reservasi')
         .update({ status: 'dipanggil', loket: loket })
         .eq('id', id);
+
+      if (!error) {
+        loadData();
+      }
+    }
+
+    async function panggilUlangKategori(kategori) {
+      const item = activeData[kategori];
+      if (!item) {
+        alert(`Tidak ada antrian ${kategori} yang sedang aktif untuk dipanggil.`);
+        return;
+      }
+      const loket = document.getElementById('selectLoket').value;
+
+      // Update loket di database agar display mendeteksi trigger pemanggilan ulang
+      await supabaseClient
+        .from('reservasi')
+        .update({ loket: loket })
+        .eq('id', item.id);
+        
+      alert(`Memanggil ulang nomor ${item.nomor_antrian} untuk Loket ${loket}`);
+    }
+
+    async function selesaikanAntrianKategori(kategori) {
+      const item = activeData[kategori];
+      if (!item) {
+        alert(`Tidak ada antrian ${kategori} yang sedang dipanggil.`);
+        return;
+      }
+
+      const { error } = await supabaseClient
+        .from('reservasi')
+        .update({ status: 'selesai' })
+        .eq('id', item.id);
 
       if (!error) {
         loadData();
@@ -160,22 +256,6 @@
       } else {
         alert('Gagal menghapus: ' + error.message);
       }
-    }
-
-    async function selesaikanAntrian() {
-      if (!currentActiveId) return;
-      await supabaseClient.from('reservasi').update({ status: 'selesai' }).eq('id', currentActiveId);
-      loadData();
-    }
-
-    async function panggilUlang() {
-      if (!currentActiveId) return;
-      const loket = document.getElementById('selectLoket').value;
-      
-      await supabaseClient
-        .from('reservasi')
-        .update({ loket: loket })
-        .eq('id', currentActiveId);
     }
 
     async function resetSetelanPabrik() {
