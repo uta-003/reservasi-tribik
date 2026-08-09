@@ -51,12 +51,19 @@
           </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-3">
-          <button onclick="selesaikanAntrian()" class="py-3 bg-green-700 hover:bg-green-800 text-white font-bold rounded-xl shadow">
-            Selesai
-          </button>
-          <button onclick="panggilUlang()" class="py-3 bg-[#D53E0F] hover:bg-[#9B0F06] text-[#EED9B9] font-bold rounded-xl shadow">
-            Panggil Ulang Suara
+        <div class="space-y-3">
+          <div class="grid grid-cols-2 gap-3">
+            <button onclick="selesaikanAntrian()" class="py-3 bg-green-700 hover:bg-green-800 text-white font-bold rounded-xl shadow">
+              Selesai
+            </button>
+            <button onclick="panggilUlang()" class="py-3 bg-[#D53E0F] hover:bg-[#9B0F06] text-[#EED9B9] font-bold rounded-xl shadow">
+              Panggil Ulang Suara
+            </button>
+          </div>
+          
+          <!-- Tombol Reset Setelan Pabrik -->
+          <button onclick="resetSetelanPabrik()" class="w-full py-3 bg-red-950/80 hover:bg-red-900 text-red-200 border border-red-700 font-bold rounded-xl text-xs uppercase tracking-wider transition-all">
+            ⚠️ Reset Antrian (Setelan Pabrik)
           </button>
         </div>
       </div>
@@ -144,16 +151,30 @@
     async function panggilUlang() {
       if (!currentActiveId) return;
       const loket = document.getElementById('selectLoket').value;
-      const nomor = document.getElementById('aktifNomor').innerText;
       
-      // Update data untuk mentrigger panggilan suara di display
       await supabaseClient
         .from('reservasi')
         .update({ loket: loket })
         .eq('id', currentActiveId);
     }
 
-    // Sync Realtime
+    async function resetSetelanPabrik() {
+      const konfirmasi = confirm("Apakah Anda yakin ingin menghapus SELURUH data antrian dan mengembalikannya ke setelan pabrik?");
+      if (!konfirmasi) return;
+
+      const { error } = await supabaseClient
+        .from('reservasi')
+        .delete()
+        .neq('id', 0);
+
+      if (error) {
+        alert("Gagal melakukan reset: " + error.message);
+      } else {
+        alert("Berhasil! Semua data antrian telah dibersihkan.");
+        loadData();
+      }
+    }
+
     supabaseClient.channel('admin-channel')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'reservasi' }, () => {
         loadData();
