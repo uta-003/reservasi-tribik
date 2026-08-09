@@ -1,109 +1,158 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" class="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Panel Admin - Balai Lelang Tribik</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'] }
+        }
+      }
+    }
+  </script>
   <style>
-    body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #5E0006; color: #EED9B9; }
-    .glass-box { background: rgba(155, 15, 6, 0.3); backdrop-filter: blur(12px); border: 1px solid rgba(213, 62, 15, 0.3); }
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    .glass-box {
+      background: rgba(120, 10, 14, 0.4);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(213, 62, 15, 0.25);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    }
+    .input-glass {
+      background: rgba(30, 0, 2, 0.6);
+      border: 1px solid rgba(213, 62, 15, 0.35);
+    }
+    .custom-scroll::-webkit-scrollbar { width: 6px; }
+    .custom-scroll::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); border-radius: 8px; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: rgba(213, 62, 15, 0.5); border-radius: 8px; }
   </style>
 </head>
-<body class="p-6 min-h-screen">
-  <div class="max-w-7xl mx-auto space-y-6">
+<body class="min-h-screen bg-gradient-to-br from-[#3a0003] via-[#5E0006] to-[#1e0002] text-[#EED9B9] p-4 lg:p-8 antialiased relative">
+
+  <!-- Background Orbs -->
+  <div class="absolute top-0 right-0 w-96 h-96 bg-[#D53E0F]/15 rounded-full blur-[100px] pointer-events-none"></div>
+
+  <div class="max-w-7xl mx-auto space-y-6 relative z-10">
     
     <!-- Header Admin -->
-    <div class="flex justify-between items-center glass-box p-5 rounded-2xl">
-      <div>
-        <h1 class="text-2xl font-bold text-[#EED9B9]">Panel Kontrol Loket Admin</h1>
-        <p class="text-xs opacity-75">Balai Lelang Tribik</p>
+    <header class="flex flex-col md:flex-row justify-between items-center glass-box p-6 rounded-[2rem] gap-4">
+      <div class="flex items-center gap-4">
+        <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#9B0F06] to-[#D53E0F] border border-[#EED9B9]/30 flex items-center justify-center text-xl font-black shadow-lg">
+          T
+        </div>
+        <div>
+          <h1 class="text-xl lg:text-2xl font-black text-white tracking-tight">Panel Kontrol Loket Admin</h1>
+          <p class="text-xs uppercase tracking-widest text-[#EED9B9]/75 font-semibold mt-0.5">Balai Lelang Tribik Management</p>
+        </div>
       </div>
-      <div class="flex items-center gap-3">
-        <label class="text-xs font-bold uppercase">Pilih Loket Anda:</label>
-        <select id="selectLoket" class="bg-[#5E0006] text-[#EED9B9] border border-[#D53E0F] px-4 py-2 rounded-xl text-sm font-bold">
+      <div class="flex items-center gap-3 bg-black/30 p-2 rounded-2xl border border-[#D53E0F]/30">
+        <label class="text-xs font-bold uppercase tracking-wider text-[#EED9B9]/90 px-2">Loket Aktif:</label>
+        <select id="selectLoket" class="bg-[#5E0006] text-white border border-[#D53E0F] px-4 py-2 rounded-xl text-sm font-bold focus:outline-none cursor-pointer">
           <option value="1">Loket 1</option>
           <option value="2">Loket 2</option>
           <option value="3">Loket 3</option>
         </select>
       </div>
-    </div>
+    </header>
 
     <!-- Layout Grid Admin -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
       
-      <!-- Daftar Antrian Menunggu -->
-      <div class="glass-box p-5 rounded-2xl space-y-4">
-        <h2 class="font-bold text-lg text-[#EED9B9] border-b border-[#D53E0F] pb-2">Daftar Antrian Menunggu</h2>
-        <div id="daftarAntrian" class="space-y-3 max-h-[550px] overflow-y-auto pr-2">
-          <p class="text-sm opacity-50">Memuat data antrian...</p>
+      <!-- Daftar Antrian Menunggu (5 Kolom) -->
+      <div class="lg:col-span-5 glass-box p-6 rounded-[2rem] space-y-5 flex flex-col h-[650px]">
+        <div class="flex justify-between items-center border-b border-[#D53E0F]/30 pb-3">
+          <h2 class="font-extrabold text-lg text-white">Daftar Antrian Menunggu</h2>
+          <span id="queueCountBadge" class="text-xs font-bold px-3 py-1 bg-[#D53E0F]/30 text-white rounded-full border border-[#D53E0F]/40">0 Antrian</span>
+        </div>
+        <div id="daftarAntrian" class="space-y-3 overflow-y-auto pr-2 custom-scroll flex-1">
+          <div class="text-center py-12 text-[#EED9B9]/50 text-sm">Memuat data antrian...</div>
         </div>
       </div>
 
-      <!-- 3 Tampilan Sedang Diproses Berdasarkan Kategori -->
-      <div class="space-y-6">
+      <!-- 3 Tampilan Sedang Diproses & Kontrol (7 Kolom) -->
+      <div class="lg:col-span-7 space-y-6">
         
-        <h2 class="font-bold text-lg text-[#EED9B9] border-b border-[#D53E0F] pb-2">Sedang Dilayani Saat Ini (3 Kategori)</h2>
-        
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <!-- 1. Unit -->
-          <div class="glass-box p-4 rounded-2xl text-center flex flex-col justify-between space-y-3">
-            <span class="text-[10px] font-bold uppercase tracking-wider bg-[#D53E0F] text-[#EED9B9] px-2 py-1 rounded-full">Unit</span>
-            <div>
-              <div id="aktifNomorUnit" class="text-3xl font-black text-[#EED9B9]">--</div>
-              <div id="aktifNamaUnit" class="text-xs opacity-80 truncate mt-1">Tidak ada</div>
+        <div class="glass-box p-6 rounded-[2rem] space-y-5">
+          <h2 class="font-extrabold text-lg text-white border-b border-[#D53E0F]/30 pb-3">Sedang Dilayani Saat Ini (3 Kategori)</h2>
+          
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            
+            <!-- 1. Unit -->
+            <div class="input-glass p-5 rounded-2xl text-center flex flex-col justify-between space-y-4 border border-[#D53E0F]/40">
+              <span class="text-[10px] font-black uppercase tracking-wider bg-gradient-to-r from-[#D53E0F] to-[#b8330c] text-white px-3 py-1 rounded-full shadow">
+                🚚 Unit
+              </span>
+              <div class="py-2">
+                <div id="aktifNomorUnit" class="text-4xl font-black text-white tracking-wide">--</div>
+                <div id="aktifNamaUnit" class="text-xs font-medium text-[#EED9B9]/80 truncate mt-2">Tidak ada</div>
+              </div>
+              <div class="space-y-2 pt-2 border-t border-white/10">
+                <button onclick="panggilUlangKategori('unit')" class="w-full py-2 bg-[#D53E0F] hover:bg-[#b8330c] text-white font-bold text-xs rounded-xl shadow transition-all flex items-center justify-center gap-1.5">
+                  🔊 Panggil Suara
+                </button>
+                <button onclick="selesaikanAntrianKategori('unit')" class="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow transition-all">
+                  ✓ Selesai
+                </button>
+              </div>
             </div>
-            <div class="space-y-2">
-              <button onclick="panggilUlangKategori('unit')" class="w-full py-1.5 bg-[#D53E0F] hover:bg-[#9B0F06] text-[#EED9B9] font-bold text-xs rounded-lg shadow">
-                🔊 Panggil Suara
-              </button>
-              <button onclick="selesaikanAntrianKategori('unit')" class="w-full py-1.5 bg-green-700 hover:bg-green-800 text-white font-bold text-xs rounded-lg shadow">
-                Selesai
-              </button>
-            </div>
-          </div>
 
-          <!-- 2. BPKB -->
-          <div class="glass-box p-4 rounded-2xl text-center flex flex-col justify-between space-y-3">
-            <span class="text-[10px] font-bold uppercase tracking-wider bg-[#D53E0F] text-[#EED9B9] px-2 py-1 rounded-full">BPKB</span>
-            <div>
-              <div id="aktifNomorBpkb" class="text-3xl font-black text-[#EED9B9]">--</div>
-              <div id="aktifNamaBpkb" class="text-xs opacity-80 truncate mt-1">Tidak ada</div>
+            <!-- 2. BPKB -->
+            <div class="input-glass p-5 rounded-2xl text-center flex flex-col justify-between space-y-4 border border-[#D53E0F]/40">
+              <span class="text-[10px] font-black uppercase tracking-wider bg-gradient-to-r from-[#D53E0F] to-[#b8330c] text-white px-3 py-1 rounded-full shadow">
+                📄 BPKB
+              </span>
+              <div class="py-2">
+                <div id="aktifNomorBpkb" class="text-4xl font-black text-white tracking-wide">--</div>
+                <div id="aktifNamaBpkb" class="text-xs font-medium text-[#EED9B9]/80 truncate mt-2">Tidak ada</div>
+              </div>
+              <div class="space-y-2 pt-2 border-t border-white/10">
+                <button onclick="panggilUlangKategori('bpkb')" class="w-full py-2 bg-[#D53E0F] hover:bg-[#b8330c] text-white font-bold text-xs rounded-xl shadow transition-all flex items-center justify-center gap-1.5">
+                  🔊 Panggil Suara
+                </button>
+                <button onclick="selesaikanAntrianKategori('bpkb')" class="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow transition-all">
+                  ✓ Selesai
+                </button>
+              </div>
             </div>
-            <div class="space-y-2">
-              <button onclick="panggilUlangKategori('bpkb')" class="w-full py-1.5 bg-[#D53E0F] hover:bg-[#9B0F06] text-[#EED9B9] font-bold text-xs rounded-lg shadow">
-                🔊 Panggil Suara
-              </button>
-              <button onclick="selesaikanAntrianKategori('bpkb')" class="w-full py-1.5 bg-green-700 hover:bg-green-800 text-white font-bold text-xs rounded-lg shadow">
-                Selesai
-              </button>
-            </div>
-          </div>
 
-          <!-- 3. Pelunasan -->
-          <div class="glass-box p-4 rounded-2xl text-center flex flex-col justify-between space-y-3">
-            <span class="text-[10px] font-bold uppercase tracking-wider bg-[#D53E0F] text-[#EED9B9] px-2 py-1 rounded-full">Pelunasan</span>
-            <div>
-              <div id="aktifNomorPelunasan" class="text-3xl font-black text-[#EED9B9]">--</div>
-              <div id="aktifNamaPelunasan" class="text-xs opacity-80 truncate mt-1">Tidak ada</div>
+            <!-- 3. Pelunasan -->
+            <div class="input-glass p-5 rounded-2xl text-center flex flex-col justify-between space-y-4 border border-[#D53E0F]/40">
+              <span class="text-[10px] font-black uppercase tracking-wider bg-gradient-to-r from-[#D53E0F] to-[#b8330c] text-white px-3 py-1 rounded-full shadow">
+                💳 Pelunasan
+              </span>
+              <div class="py-2">
+                <div id="aktifNomorPelunasan" class="text-4xl font-black text-white tracking-wide">--</div>
+                <div id="aktifNamaPelunasan" class="text-xs font-medium text-[#EED9B9]/80 truncate mt-2">Tidak ada</div>
+              </div>
+              <div class="space-y-2 pt-2 border-t border-white/10">
+                <button onclick="panggilUlangKategori('pelunasan')" class="w-full py-2 bg-[#D53E0F] hover:bg-[#b8330c] text-white font-bold text-xs rounded-xl shadow transition-all flex items-center justify-center gap-1.5">
+                  🔊 Panggil Suara
+                </button>
+                <button onclick="selesaikanAntrianKategori('pelunasan')" class="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow transition-all">
+                  ✓ Selesai
+                </button>
+              </div>
             </div>
-            <div class="space-y-2">
-              <button onclick="panggilUlangKategori('pelunasan')" class="w-full py-1.5 bg-[#D53E0F] hover:bg-[#9B0F06] text-[#EED9B9] font-bold text-xs rounded-lg shadow">
-                🔊 Panggil Suara
-              </button>
-              <button onclick="selesaikanAntrianKategori('pelunasan')" class="w-full py-1.5 bg-green-700 hover:bg-green-800 text-white font-bold text-xs rounded-lg shadow">
-                Selesai
-              </button>
-            </div>
+
           </div>
         </div>
 
-        <!-- Tombol Aksi Global -->
-        <div class="glass-box p-5 rounded-2xl space-y-3">
-          <button onclick="resetSetelanPabrik()" class="w-full py-3 bg-red-950/80 hover:bg-red-900 text-red-200 border border-red-700 font-bold rounded-xl text-xs uppercase tracking-wider transition-all">
-            ⚠️ Reset Semua Antrian (Setelan Pabrik)
+        <!-- Global Control Panel -->
+        <div class="glass-box p-6 rounded-[2rem] flex items-center justify-between">
+          <div>
+            <h3 class="font-bold text-sm text-white">Zona Perawatan Sistem</h3>
+            <p class="text-xs text-[#EED9B9]/60">Bersihkan data atau reset antrian harian.</p>
+          </div>
+          <button onclick="resetSetelanPabrik()" class="py-3 px-6 bg-red-950/80 hover:bg-red-900 text-red-200 border border-red-700/60 font-extrabold rounded-2xl text-xs uppercase tracking-wider transition-all shadow-lg active:scale-95">
+            ⚠️ Reset Semua Antrian
           </button>
         </div>
 
@@ -118,14 +167,9 @@
     const SUPABASE_KEY = 'sb_publishable_2e3hma5Eo6DXz6_i034kDQ_rQl9lOhK';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    let activeData = {
-      unit: null,
-      bpkb: null,
-      pelunasan: null
-    };
+    let activeData = { unit: null, bpkb: null, pelunasan: null };
 
     async function loadData() {
-      // 1. Ambil daftar antrian menunggu
       const { data: dataMenunggu } = await supabaseClient
         .from('reservasi')
         .select('*')
@@ -136,24 +180,28 @@
       container.innerHTML = '';
 
       if (!dataMenunggu || dataMenunggu.length === 0) {
-        container.innerHTML = '<p class="text-sm opacity-50">Tidak ada antrian menunggu.</p>';
+        container.innerHTML = '<div class="text-center py-20 text-[#EED9B9]/50 text-sm">Tidak ada antrian menunggu saat ini.</div>';
+        document.getElementById('queueCountBadge').innerText = '0 Antrian';
       } else {
+        document.getElementById('queueCountBadge').innerText = `${dataMenunggu.length} Antrian`;
         dataMenunggu.forEach(item => {
           const div = document.createElement('div');
-          div.className = 'flex items-center justify-between p-3 rounded-xl bg-[#5E0006] border border-[#D53E0F]/50';
+          div.className = 'flex items-center justify-between p-4 rounded-2xl input-glass border border-[#D53E0F]/30 hover:border-[#D53E0F] transition-all';
           div.innerHTML = `
             <div>
-              <span class="text-lg font-bold text-[#EED9B9]">${item.nomor_antrian}</span>
-              <span class="text-xs ml-2 opacity-75">(${item.nama})</span>
-              <div class="text-[10px] uppercase text-[#D53E0F] font-semibold">${item.kategori}</div>
+              <div class="flex items-center gap-2">
+                <span class="text-lg font-black text-white">${item.nomor_antrian}</span>
+                <span class="text-[10px] uppercase font-extrabold px-2 py-0.5 rounded-full bg-[#D53E0F]/20 text-[#EED9B9] border border-[#D53E0F]/30">${item.kategori}</span>
+              </div>
+              <div class="text-xs text-[#EED9B9]/80 font-medium mt-1">${item.nama}</div>
             </div>
             <div class="flex items-center gap-2">
               <button onclick="panggilAntrian(${item.id}, '${item.kategori}')" 
-                      class="px-3 py-2 bg-[#D53E0F] text-[#EED9B9] font-bold text-xs rounded-lg hover:bg-[#9B0F06]">
+                      class="px-3.5 py-2 bg-[#D53E0F] text-white font-extrabold text-xs rounded-xl hover:bg-[#b8330c] shadow transition-all">
                 Panggil
               </button>
               <button onclick="hapusSatuAntrian(${item.id}, '${item.nomor_antrian}')" 
-                      class="px-3 py-2 bg-red-900/80 text-red-200 hover:bg-red-800 font-bold text-xs rounded-lg border border-red-600">
+                      class="px-3 py-2 bg-red-950/60 text-red-300 hover:bg-red-900 font-bold text-xs rounded-xl border border-red-800 transition-all">
                 Hapus
               </button>
             </div>
@@ -162,7 +210,6 @@
         });
       }
 
-      // 2. Ambil semua antrian yang sedang berstatus 'dipanggil'
       const { data: dataDipanggil } = await supabaseClient
         .from('reservasi')
         .select('*')
@@ -198,15 +245,12 @@
 
     async function panggilAntrian(id, kategori) {
       const loket = document.getElementById('selectLoket').value;
-
       const { error } = await supabaseClient
         .from('reservasi')
         .update({ status: 'dipanggil', loket: loket })
         .eq('id', id);
 
-      if (!error) {
-        loadData();
-      }
+      if (!error) loadData();
     }
 
     async function panggilUlangKategori(kategori) {
@@ -216,8 +260,6 @@
         return;
       }
       const loket = document.getElementById('selectLoket').value;
-
-      // Update loket di database agar display mendeteksi trigger pemanggilan ulang
       await supabaseClient
         .from('reservasi')
         .update({ loket: loket })
@@ -238,9 +280,7 @@
         .update({ status: 'selesai' })
         .eq('id', item.id);
 
-      if (!error) {
-        loadData();
-      }
+      if (!error) loadData();
     }
 
     async function hapusSatuAntrian(id, nomor) {
@@ -251,35 +291,34 @@
         .delete()
         .eq('id', id);
 
-      if (!error) {
-        loadData();
-      } else {
-        alert('Gagal menghapus: ' + error.message);
-      }
+      if (!error) loadData();
+      else alert('Gagal menghapus: ' + error.message);
     }
 
     async function resetSetelanPabrik() {
-      const konfirmasi = confirm("Apakah Anda yakin ingin menghapus SELURUH data antrian dan mengembalikannya ke setelan pabrik?");
-      if (!konfirmasi) return;
+      if (!confirm("Apakah Anda yakin ingin menghapus SELURUH data antrian dan mengembalikannya ke setelan pabrik?")) return;
 
       const { error } = await supabaseClient
         .from('reservasi')
         .delete()
         .neq('id', 0);
 
-      if (error) {
-        alert("Gagal melakukan reset: " + error.message);
-      } else {
+      if (error) alert("Gagal melakukan reset: " + error.message);
+      else {
         alert("Berhasil! Semua data antrian telah dibersihkan.");
         loadData();
       }
     }
 
-    supabaseClient.channel('admin-channel')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'reservasi' }, () => {
-        loadData();
-      })
-      .subscribe();
+    try {
+      supabaseClient.channel('admin-channel')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'reservasi' }, () => {
+          loadData();
+        })
+        .subscribe();
+    } catch (wsErr) {
+      console.warn('Realtime websocket disabled in sandbox, using polling fallback.', wsErr);
+    }
 
     setInterval(loadData, 2000);
     loadData();
