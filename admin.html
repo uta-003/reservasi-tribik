@@ -70,11 +70,10 @@
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     let currentActiveId = null;
-    let currentActiveNomor = '--';
-    let currentActiveNama = '';
 
-    async function loadAntrian() {
-      const { data, error } = await supabaseClient
+    async function loadData() {
+      // 1. Ambil daftar antrian menunggu
+      const { data: dataMenunggu } = await supabaseClient
         .from('reservasi')
         .select('*')
         .eq('status', 'menunggu')
@@ -83,81 +82,86 @@
       const container = document.getElementById('daftarAntrian');
       container.innerHTML = '';
 
-      if (error || !data || data.length === 0) {
+      if (!dataMenunggu || dataMenunggu.length === 0) {
         container.innerHTML = '<p class="text-sm opacity-50">Tidak ada antrian menunggu.</p>';
-        return;
+      } else {
+        dataMenunggu.forEach(item => {
+          const div = document.createElement('div');
+          div.className = 'flex items-center justify-between p-3 rounded-xl bg-[#5E0006] border border-[#D53E0F]/50';
+          div.innerHTML = `
+            <div>
+              <span class="text-lg font-bold text-[#EED9B9]">${item.nomor_antrian}</span>
+              <span class="text-xs ml-2 opacity-75">(${item.nama})</span>
+              <div class="text-[10px] uppercase text-[#D53E0F] font-semibold">${item.kategori}</div>
+            </div>
+            <button onclick="panggilAntrian(${item.id}, '${item.nomor_antrian}', '${item.nama}')" 
+                    class="px-4 py-2 bg-[#D53E0F] text-[#EED9B9] font-bold text-xs rounded-lg hover:bg-[#9B0F06]">
+              Panggil
+            </button>
+          `;
+          container.appendChild(div);
+        });
       }
 
-      data.forEach(item => {
-        const div = document.createElement('div');
-        div.className = 'flex items-center justify-between p-3 rounded-xl bg-[#5E0006] border border-[#D53E0F]/50';
-        div.innerHTML = `
-          <div>
-            <span class="text-lg font-bold text-[#EED9B9]">${item.nomor_antrian}</span>
-            <span class="text-xs ml-2 opacity-75">(${item.nama})</span>
-            <div class="text-[10px] uppercase text-[#D53E0F] font-semibold">${item.kategori}</div>
-          </div>
-          <button onclick="panggilAntrian(${item.id}, '${item.nomor_antrian}', '${item.nama}')" 
-                  class="px-4 py-2 bg-[#D53E0F] text-[#EED9B9] font-bold text-xs rounded-lg hover:bg-[#9B0F06]">
-            Panggil
-          </button>
-        `;
-        container.appendChild(div);
-      });
+      // 2. Ambil antrian yang sedang dipanggil
+      const { data: dataDipanggil } = await supabaseClient
+        .from('reservasi')
+        .select('*')
+        .eq('status', 'dipanggil')
+        .order('id', { ascending: false })
+        .limit(1);
+
+      if (dataDipanggil && dataDipanggil.length > 0) {
+        currentActiveId = dataDipanggil[0].id;
+        document.getElementById('aktifNomor').innerText = dataDipanggil[0].nomor_antrian;
+        document.getElementById('aktifNama').innerText = dataDipanggil[0].nama;
+      } else {
+        currentActiveId = null;
+        document.getElementById('aktifNomor').innerText = '--';
+        document.getElementById('aktifNama').innerText = 'Tidak Ada Antrian Dipanggil';
+      }
     }
 
     async function panggilAntrian(id, nomor, nama) {
       const loket = document.getElementById('selectLoket').value;
-      currentActiveId = id;
-      currentActiveNomor = nomor;
-      currentActiveNama = nama;
 
       const { error } = await supabaseClient
         .from('reservasi')
-        .update({ 
-          status: 'dipanggil', 
-          loket: loket 
-        })
+        .update({ status: 'dipanggil', loket: loket })
         .eq('id', id);
 
       if (!error) {
-        document.getElementById('aktifNomor').innerText = nomor;
-        document.getElementById('aktifNama').innerText = nama;
-        loadAntrian();
-      } else {
-        alert('Gagal memanggil antrian: ' + error.message);
+        loadData();
       }
     }
 
     async function selesaikanAntrian() {
       if (!currentActiveId) return;
       await supabaseClient.from('reservasi').update({ status: 'selesai' }).eq('id', currentActiveId);
-      currentActiveId = null;
-      document.getElementById('aktifNomor').innerText = '--';
-      document.getElementById('aktifNama').innerText = 'Silakan panggil antrian berikutnya';
-      loadAntrian();
+      loadData();
     }
 
     async function panggilUlang() {
       if (!currentActiveId) return;
       const loket = document.getElementById('selectLoket').value;
+      const nomor = document.getElementById('aktifNomor').innerText;
       
-      // Update status dengan trigger
+      // Update data untuk mentrigger panggilan suara di display
       await supabaseClient
         .from('reservasi')
-        .update({ status: 'dipanggil', loket: loket })
+        .update({ loket: loket })
         .eq('id', currentActiveId);
     }
 
-    // Synchronize Realtime + Polling
+    // Sync Realtime
     supabaseClient.channel('admin-channel')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'reservasi' }, () => {
-        loadAntrian();
+        loadData();
       })
       .subscribe();
 
-    setInterval(loadAntrian, 3000);
-    loadAntrian();
+    setInterval(loadData, 2000);
+    loadData();
   </script>
 </body>
 </html>
