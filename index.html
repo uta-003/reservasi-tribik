@@ -1,63 +1,110 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" class="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ambil Antrian - Balai Lelang Tribik</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'] }
+        }
+      }
+    }
+  </script>
   <style>
-    body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #5E0006; color: #EED9B9; }
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
     .glass-card {
-      background: rgba(155, 15, 6, 0.4);
-      backdrop-filter: blur(16px);
+      background: rgba(94, 0, 6, 0.75);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
       border: 1px solid rgba(238, 217, 185, 0.2);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+    }
+    .input-glass {
+      background: rgba(30, 0, 2, 0.6);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(213, 62, 15, 0.35);
+    }
+    .input-glass:focus {
+      border-color: #D53E0F;
+      box-shadow: 0 0 0 3px rgba(213, 62, 15, 0.3);
     }
   </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-4">
+<body class="min-h-screen bg-gradient-to-br from-[#3a0003] via-[#5E0006] to-[#1e0002] text-[#EED9B9] flex items-center justify-center p-4 antialiased relative overflow-hidden">
 
-  <div class="w-full max-w-md glass-card rounded-3xl p-6 shadow-2xl space-y-6">
+  <!-- Background Glow Orbs -->
+  <div class="absolute -top-32 -left-32 w-96 h-96 bg-[#D53E0F]/20 rounded-full blur-3xl pointer-events-none"></div>
+  <div class="absolute -bottom-32 -right-32 w-96 h-96 bg-[#9B0F06]/30 rounded-full blur-3xl pointer-events-none"></div>
+
+  <div class="w-full max-w-md glass-card rounded-[2.5rem] p-8 md:p-10 relative z-10 space-y-8">
+    
     <!-- Header -->
-    <div class="text-center space-y-2">
-      <div class="inline-block p-3 rounded-2xl bg-[#9B0F06] border border-[#D53E0F] text-[#EED9B9] font-bold text-xl">
-        TRIBIK
+    <div class="text-center space-y-3">
+      <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-tr from-[#9B0F06] to-[#D53E0F] border border-[#EED9B9]/25 shadow-xl text-[#EED9B9] font-black text-2xl tracking-wider">
+        T
       </div>
-      <h1 class="text-2xl font-extrabold text-[#EED9B9]">Balai Lelang Tribik</h1>
-      <p class="text-sm opacity-80 text-[#EED9B9]">Ambil Nomor Antrian Pelayanan Online</p>
+      <div>
+        <h1 class="text-2xl font-extrabold tracking-tight text-[#EED9B9]">Balai Lelang Tribik</h1>
+        <p class="text-xs uppercase tracking-widest text-[#EED9B9]/75 mt-1 font-semibold">Sistem Antrian Digital Modern</p>
+      </div>
     </div>
 
     <!-- Form Input -->
-    <form id="formAntrian" class="space-y-4">
-      <div>
-        <label class="block text-xs font-semibold uppercase tracking-wider mb-2 text-[#EED9B9]">Nama Lengkap</label>
-        <input type="text" id="nama" required placeholder="Masukkan nama Anda" 
-               class="w-full px-4 py-3 rounded-xl bg-[#5E0006]/80 border border-[#D53E0F] text-[#EED9B9] placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#D53E0F]">
+    <form id="formAntrian" class="space-y-5">
+      <div class="space-y-2">
+        <label class="block text-xs font-bold uppercase tracking-wider text-[#EED9B9]/90">Nama Lengkap</label>
+        <div class="relative">
+          <input type="text" id="nama" required placeholder="Masukkan nama lengkap Anda" 
+                 class="w-full px-4 py-4 rounded-2xl input-glass text-[#EED9B9] placeholder-[#EED9B9]/40 focus:outline-none transition-all font-medium text-sm">
+        </div>
       </div>
 
-      <div>
-        <label class="block text-xs font-semibold uppercase tracking-wider mb-2 text-[#EED9B9]">Kategori Layanan</label>
-        <select id="kategori" class="w-full px-4 py-3 rounded-xl bg-[#5E0006] border border-[#D53E0F] text-[#EED9B9] focus:outline-none focus:ring-2 focus:ring-[#D53E0F]">
-          <option value="unit">Pengambilan Unit (Kode U)</option>
-          <option value="bpkb">Pengambilan BPKB (Kode B)</option>
-          <option value="pelunasan">Pelunasan (Kode P)</option>
-        </select>
+      <div class="space-y-2">
+        <label class="block text-xs font-bold uppercase tracking-wider text-[#EED9B9]/90">Pilih Kategori Layanan</label>
+        <div class="relative">
+          <select id="kategori" class="w-full px-4 py-4 rounded-2xl input-glass text-[#EED9B9] focus:outline-none appearance-none transition-all font-medium text-sm cursor-pointer">
+            <option value="unit" class="bg-[#5E0006] text-[#EED9B9]">🚚 Pengambilan Unit (Kode U)</option>
+            <option value="bpkb" class="bg-[#5E0006] text-[#EED9B9]">📄 Pengambilan BPKB (Kode B)</option>
+            <option value="pelunasan" class="bg-[#5E0006] text-[#EED9B9]">💳 Pelunasan (Kode P)</option>
+          </select>
+        </div>
       </div>
 
       <button type="submit" id="btnSubmit" 
-              class="w-full py-4 rounded-xl font-bold bg-[#D53E0F] hover:bg-[#9B0F06] text-[#EED9B9] transition-all duration-200 shadow-lg active:scale-95">
+              class="w-full py-4 rounded-2xl font-bold bg-gradient-to-r from-[#D53E0F] to-[#9B0F06] hover:from-[#e04615] hover:to-[#b01208] text-[#EED9B9] transition-all duration-300 shadow-xl shadow-black/40 text-sm tracking-wider uppercase">
         Ambil Nomor Antrian
       </button>
     </form>
 
     <!-- Tampilan Tiket Setelah Berhasil -->
-    <div id="ticketResult" class="hidden text-center p-6 bg-[#5E0006] rounded-2xl border border-[#D53E0F] space-y-3">
-      <span class="text-xs font-bold text-[#D53E0F] uppercase tracking-widest">Tiket Antrian Anda</span>
-      <div id="displayNomor" class="text-5xl font-extrabold text-[#EED9B9] tracking-wider">--</div>
-      <div id="displayNama" class="text-lg font-medium text-[#EED9B9]">--</div>
-      <div id="displayKategori" class="text-xs uppercase px-3 py-1 bg-[#9B0F06] rounded-full inline-block text-[#EED9B9]">--</div>
-      <p class="text-xs opacity-75 mt-2">Silakan pantau layar panggilan di ruang tunggu.</p>
+    <div id="ticketResult" class="hidden text-center p-6 rounded-3xl bg-black/50 border border-[#D53E0F]/50 backdrop-blur-md space-y-4">
+      <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-bold border border-emerald-500/30">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Tiket Berhasil Dibuat
+      </div>
+      <div>
+        <div class="text-xs uppercase tracking-widest text-[#EED9B9]/60 font-semibold mb-1">Nomor Antrian Anda</div>
+        <div id="displayNomor" class="text-6xl font-black text-white tracking-wider drop-shadow-lg">--</div>
+      </div>
+      <div class="pt-2 border-t border-[#EED9B9]/10">
+        <div id="displayNama" class="text-lg font-bold text-[#EED9B9]">--</div>
+        <div id="displayKategori" class="text-[11px] uppercase tracking-wider px-3 py-1 bg-[#D53E0F]/30 border border-[#D53E0F]/40 rounded-full inline-block text-[#EED9B9] mt-2 font-bold">--</div>
+      </div>
+      <p class="text-xs text-[#EED9B9]/70 pt-1">Silakan pantau layar panggilan di ruang tunggu.</p>
+      <button onclick="location.reload()" class="w-full py-2.5 bg-white/10 hover:bg-white/20 text-[#EED9B9] font-bold text-xs rounded-xl transition-all">
+        Ambil Antrian Baru
+      </button>
+    </div>
+
+    <!-- Footer info -->
+    <div class="text-center text-[11px] text-[#EED9B9]/50 font-medium">
+      &copy; 2026 Balai Lelang Tribik. All rights reserved.
     </div>
   </div>
 
@@ -75,13 +122,14 @@
       const kategori = document.getElementById('kategori').value;
       const btnSubmit = document.getElementById('btnSubmit');
 
+      if (!nama) return;
+
       btnSubmit.disabled = true;
-      btnSubmit.innerText = 'Memproses Nomor Antrian...';
+      btnSubmit.innerText = 'Memproses Antrian...';
 
       const prefix = kategori === 'unit' ? 'U' : (kategori === 'bpkb' ? 'B' : 'P');
 
       try {
-        // Cari nomor antrian terakhir dengan prefix kategori yang sama di database
         const { data: lastAntrian, error: fetchError } = await supabaseClient
           .from('reservasi')
           .select('nomor_antrian')
@@ -103,10 +151,8 @@
           }
         }
 
-        // Format angka berurut 3 digit (misal U-001, U-002, B-001)
         const nomorAntrian = `${prefix}-${String(nextNumber).padStart(3, '0')}`;
 
-        // Simpan antrian baru ke database Supabase
         const { error: insertError } = await supabaseClient
           .from('reservasi')
           .insert([
@@ -120,16 +166,16 @@
 
         if (insertError) throw insertError;
 
-        // Tampilkan hasil tiket
         document.getElementById('displayNomor').innerText = nomorAntrian;
         document.getElementById('displayNama').innerText = nama;
         document.getElementById('displayKategori').innerText = kategori.toUpperCase();
+        
+        form.classList.add('hidden');
         ticketResult.classList.remove('hidden');
-        form.reset();
 
       } catch (err) {
+        console.error(err);
         alert('Gagal mengambil antrian: ' + err.message);
-      } finally {
         btnSubmit.disabled = false;
         btnSubmit.innerText = 'Ambil Nomor Antrian';
       }
