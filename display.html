@@ -18,7 +18,7 @@
 </head>
 <body class="min-h-screen p-8 flex flex-col justify-between relative">
 
-  <!-- Banner Pembuka Blokir Suara (Autoplay Requirement) -->
+  <!-- Banner Pembuka Blokir Suara -->
   <div id="audioOverlay" onclick="enableAudio()" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex flex-col items-center justify-center p-6 text-center cursor-pointer">
     <div class="bg-[#9B0F06] border-2 border-[#D53E0F] p-8 rounded-3xl max-w-lg shadow-2xl space-y-4">
       <div class="text-5xl">🔊</div>
@@ -50,8 +50,8 @@
         Nomor Antrian Sedang Dipanggil
       </span>
       <div id="liveNomor" class="text-9xl font-black text-[#EED9B9] tracking-widest my-4">--</div>
-      <div id="liveNama" class="text-2xl font-bold text-[#EED9B9] opacity-80">--</div>
-      <div id="liveLoket" class="text-4xl font-extrabold text-[#D53E0F]">Silakan Menuju Loket --</div>
+      <div id="liveNama" class="text-2xl font-bold text-[#EED9B9] opacity-80">Menunggu Antrian...</div>
+      <div id="liveLoket" class="text-4xl font-extrabold text-[#D53E0F]">Silakan Menunggu Panggilan</div>
     </div>
 
     <!-- Informasi / Pengumuman -->
@@ -78,40 +78,31 @@
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     let audioEnabled = false;
-    let lastCalledId = null;
+    let lastCalledKey = null;
 
-    // 1. Fungsi Mengaktifkan Suara saat Layar Ditinggal/Dikeklik
     function enableAudio() {
       audioEnabled = true;
       document.getElementById('audioOverlay').classList.add('hidden');
       document.getElementById('audioStatus').innerText = '🔊 Suara Aktif';
       document.getElementById('audioStatus').className = 'text-xs px-3 py-1 bg-green-600/50 rounded-full font-bold';
-      
-      // Test suara singkat
       bunyiPanggilan('Tes', '1');
     }
 
-    // Jam Digital
     setInterval(() => {
       document.getElementById('clock').innerText = new Date().toLocaleTimeString('id-ID');
     }, 1000);
 
-    // 2. Fungsi Sintesis Suara Pemanggil
     function bunyiPanggilan(nomor, loket) {
       if (!audioEnabled || !('speechSynthesis' in window)) return;
-
-      window.speechSynthesis.cancel(); // Hentikan suara yang sedang berjalan
+      window.speechSynthesis.cancel();
       
       const teks = `Nomor antrian ${nomor}, silakan menuju ke loket ${loket}`;
       const uttr = new SpeechSynthesisUtterance(teks);
       uttr.lang = 'id-ID';
-      uttr.rate = 0.85; // Kecepatan bicara
-      uttr.pitch = 1.0;
-      
+      uttr.rate = 0.85;
       window.speechSynthesis.speak(uttr);
     }
 
-    // 3. Ambil Antrian Dipanggil Terbaru dari Database
     async function fetchLatestCalled() {
       const { data, error } = await supabaseClient
         .from('reservasi')
@@ -128,25 +119,29 @@
         document.getElementById('liveNama').innerText = item.nama;
         document.getElementById('liveLoket').innerText = `Silakan Menuju Loket ${item.loket || '1'}`;
 
-        // Bunyikan hanya jika ID antrian baru atau dipanggil ulang
-        if (lastCalledId !== item.id + '_' + item.updated_at) {
+        const currentKey = `${item.id}_${item.loket}`;
+        if (lastCalledKey !== currentKey) {
           bunyiPanggilan(item.nomor_antrian, item.loket || '1');
-          lastCalledId = item.id + '_' + item.updated_at;
+          lastCalledKey = currentKey;
         }
+      } else {
+        // PERBAIKAN: Jika antrian kosong/selesai, bersihkan layar TV
+        document.getElementById('liveNomor').innerText = '--';
+        document.getElementById('liveNama').innerText = 'Semua Antrian Selesai / Belum Ada Panggilan';
+        document.getElementById('liveLoket').innerText = 'Silakan Menunggu Panggilan';
+        lastCalledKey = null;
       }
     }
 
-    // 4. Realtime Listener + Fallback Interval Polling
+    // Listener Realtime
     supabaseClient.channel('display-channel')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'reservasi' }, () => {
         fetchLatestCalled();
       })
       .subscribe();
 
-    // Fallback Polling (Setiap 2.5 detik memastikan layar selalu update)
-    setInterval(fetchLatestCalled, 2500);
-
-    // Inisialisasi awal
+    // Fallback sync tiap 2 detik
+    setInterval(fetchLatestCalled, 2000);
     fetchLatestCalled();
   </script>
 </body>
