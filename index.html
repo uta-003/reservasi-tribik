@@ -51,7 +51,7 @@
       </button>
     </form>
 
-    <!-- Hasil Tiket Antrian -->
+    <!-- Tampilan Tiket Setelah Berhasil -->
     <div id="ticketResult" class="hidden text-center p-6 bg-[#5E0006] rounded-2xl border border-[#D53E0F] space-y-3">
       <span class="text-xs font-bold text-[#D53E0F] uppercase tracking-widest">Tiket Antrian Anda</span>
       <div id="displayNomor" class="text-5xl font-extrabold text-[#EED9B9] tracking-wider">--</div>
@@ -62,7 +62,6 @@
   </div>
 
   <script>
-    // Koneksi Supabase dengan Alamat & Key Anda
     const SUPABASE_URL = 'https://oapbpywsvgzegrhfhghn.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_2e3hma5Eo6DXz6_i034kDQ_rQl9lOhK';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -75,14 +74,12 @@
       const nama = document.getElementById('nama').value;
       const kategori = document.getElementById('kategori').value;
 
-      // Prefix nomor antrian
       const prefix = kategori === 'unit' ? 'U' : (kategori === 'bpkb' ? 'B' : 'P');
       const randomNum = Math.floor(100 + Math.random() * 900);
       const nomorAntrian = `${prefix}-${randomNum}`;
 
       document.getElementById('btnSubmit').innerText = 'Memproses...';
 
-      // Simpan ke database Supabase (tabel: reservasi)
       const { data, error } = await supabaseClient.from('reservasi').insert([
         {
           nomor_antrian: nomorAntrian,
