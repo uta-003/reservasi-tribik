@@ -33,9 +33,17 @@
     .custom-scroll::-webkit-scrollbar { width: 6px; }
     .custom-scroll::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); border-radius: 8px; }
     .custom-scroll::-webkit-scrollbar-thumb { background: rgba(213, 62, 15, 0.5); border-radius: 8px; }
+    @keyframes slideIn {
+      from { transform: translateY(100%); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .toast-slide { animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
   </style>
 </head>
 <body class="min-h-screen bg-gradient-to-br from-[#3a0003] via-[#5E0006] to-[#1e0002] text-[#EED9B9] p-4 lg:p-8 antialiased relative">
+
+  <!-- Toast Container -->
+  <div id="toastContainer" class="fixed bottom-6 right-6 z-50 flex flex-col gap-3 pointer-events-none"></div>
 
   <!-- Background Orbs -->
   <div class="absolute top-0 right-0 w-96 h-96 bg-[#D53E0F]/15 rounded-full blur-[100px] pointer-events-none"></div>
@@ -169,6 +177,26 @@
 
     let activeData = { unit: null, bpkb: null, pelunasan: null };
 
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = `pointer-events-auto flex items-center gap-3 px-5 py-4 rounded-2xl shadow-2xl backdrop-blur-xl border toast-slide transition-all ${
+        type === 'success' 
+          ? 'bg-emerald-950/90 border-emerald-500/40 text-emerald-200' 
+          : 'bg-red-950/90 border-red-500/40 text-red-200'
+      }`;
+      
+      const icon = type === 'success' ? '✨' : '⚠️';
+      toast.innerHTML = `<span class="text-lg">${icon}</span> <p class="text-xs font-bold tracking-wide">${message}</p>`;
+      
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(20px)';
+        setTimeout(() => toast.remove(), 300);
+      }, 4000);
+    }
+
     async function loadData() {
       const { data: dataMenunggu } = await supabaseClient
         .from('reservasi')
@@ -250,13 +278,18 @@
         .update({ status: 'dipanggil', loket: loket })
         .eq('id', id);
 
-      if (!error) loadData();
+      if (!error) {
+        showToast('Antrian berhasil dipanggil ke Loket ' + loket);
+        loadData();
+      } else {
+        showToast('Gagal memanggil antrian', 'error');
+      }
     }
 
     async function panggilUlangKategori(kategori) {
       const item = activeData[kategori];
       if (!item) {
-        alert(`Tidak ada antrian ${kategori} yang sedang aktif untuk dipanggil.`);
+        showToast(`Tidak ada antrian ${kategori} yang sedang aktif.`, 'error');
         return;
       }
       const loket = document.getElementById('selectLoket').value;
@@ -265,13 +298,13 @@
         .update({ loket: loket })
         .eq('id', item.id);
         
-      alert(`Memanggil ulang nomor ${item.nomor_antrian} untuk Loket ${loket}`);
+      showToast(`Memanggil ulang nomor ${item.nomor_antrian} untuk Loket ${loket}`);
     }
 
     async function selesaikanAntrianKategori(kategori) {
       const item = activeData[kategori];
       if (!item) {
-        alert(`Tidak ada antrian ${kategori} yang sedang dipanggil.`);
+        showToast(`Tidak ada antrian ${kategori} yang sedang dipanggil.`, 'error');
         return;
       }
 
@@ -280,7 +313,12 @@
         .update({ status: 'selesai' })
         .eq('id', item.id);
 
-      if (!error) loadData();
+      if (!error) {
+        showToast(`Antrian ${item.nomor_antrian} telah diselesaikan.`);
+        loadData();
+      } else {
+        showToast('Gagal menyelesaikan antrian', 'error');
+      }
     }
 
     async function hapusSatuAntrian(id, nomor) {
@@ -291,8 +329,12 @@
         .delete()
         .eq('id', id);
 
-      if (!error) loadData();
-      else alert('Gagal menghapus: ' + error.message);
+      if (!error) {
+        showToast(`Antrian ${nomor} dihapus.`);
+        loadData();
+      } else {
+        showToast('Gagal menghapus: ' + error.message, 'error');
+      }
     }
 
     async function resetSetelanPabrik() {
@@ -303,9 +345,10 @@
         .delete()
         .neq('id', 0);
 
-      if (error) alert("Gagal melakukan reset: " + error.message);
-      else {
-        alert("Berhasil! Semua data antrian telah dibersihkan.");
+      if (error) {
+        showToast("Gagal melakukan reset: " + error.message, 'error');
+      } else {
+        showToast("Semua data antrian telah dibersihkan.");
         loadData();
       }
     }
