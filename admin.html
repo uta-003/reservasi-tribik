@@ -65,7 +65,6 @@
   </div>
 
   <script>
-    // Koneksi Supabase dengan Alamat & Key Anda
     const SUPABASE_URL = 'https://oapbpywsvgzegrhfhghn.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_2e3hma5Eo6DXz6_i034kDQ_rQl9lOhK';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -137,7 +136,6 @@
       }
     }
 
-    // Subscribe Realtime updates dari Supabase
     supabaseClient.channel('admin-channel')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'reservasi' }, () => {
         loadAntrian();
