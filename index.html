@@ -39,9 +39,9 @@
       <div>
         <label class="block text-xs font-semibold uppercase tracking-wider mb-2 text-[#EED9B9]">Kategori Layanan</label>
         <select id="kategori" class="w-full px-4 py-3 rounded-xl bg-[#5E0006] border border-[#D53E0F] text-[#EED9B9] focus:outline-none focus:ring-2 focus:ring-[#D53E0F]">
-          <option value="unit">Pengambilan Unit</option>
-          <option value="bpkb">Pengambilan BPKB</option>
-          <option value="pelunasan">Pelunasan</option>
+          <option value="unit">Pengambilan Unit (Kode U)</option>
+          <option value="bpkb">Pengambilan BPKB (Kode B)</option>
+          <option value="pelunasan">Pelunasan (Kode P)</option>
         </select>
       </div>
 
@@ -71,34 +71,67 @@
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const nama = document.getElementById('nama').value;
+      const nama = document.getElementById('nama').value.trim();
       const kategori = document.getElementById('kategori').value;
+      const btnSubmit = document.getElementById('btnSubmit');
+
+      btnSubmit.disabled = true;
+      btnSubmit.innerText = 'Memproses Nomor Antrian...';
 
       const prefix = kategori === 'unit' ? 'U' : (kategori === 'bpkb' ? 'B' : 'P');
-      const randomNum = Math.floor(100 + Math.random() * 900);
-      const nomorAntrian = `${prefix}-${randomNum}`;
 
-      document.getElementById('btnSubmit').innerText = 'Memproses...';
+      try {
+        // Cari nomor antrian terakhir dengan prefix kategori yang sama di database
+        const { data: lastAntrian, error: fetchError } = await supabaseClient
+          .from('reservasi')
+          .select('nomor_antrian')
+          .filter('nomor_antrian', 'ilike', `${prefix}-%`)
+          .order('id', { ascending: false })
+          .limit(1);
 
-      const { data, error } = await supabaseClient.from('reservasi').insert([
-        {
-          nomor_antrian: nomorAntrian,
-          nama: nama,
-          kategori: kategori,
-          status: 'menunggu'
+        if (fetchError) throw fetchError;
+
+        let nextNumber = 1;
+        if (lastAntrian && lastAntrian.length > 0) {
+          const lastStr = lastAntrian[0].nomor_antrian;
+          const parts = lastStr.split('-');
+          if (parts.length > 1) {
+            const parsedSeq = parseInt(parts[1], 10);
+            if (!isNaN(parsedSeq)) {
+              nextNumber = parsedSeq + 1;
+            }
+          }
         }
-      ]);
 
-      document.getElementById('btnSubmit').innerText = 'Ambil Nomor Antrian';
+        // Format angka berurut 3 digit (misal U-001, U-002, B-001)
+        const nomorAntrian = `${prefix}-${String(nextNumber).padStart(3, '0')}`;
 
-      if (error) {
-        alert('Gagal mengambil antrian: ' + error.message);
-      } else {
+        // Simpan antrian baru ke database Supabase
+        const { error: insertError } = await supabaseClient
+          .from('reservasi')
+          .insert([
+            {
+              nomor_antrian: nomorAntrian,
+              nama: nama,
+              kategori: kategori,
+              status: 'menunggu'
+            }
+          ]);
+
+        if (insertError) throw insertError;
+
+        // Tampilkan hasil tiket
         document.getElementById('displayNomor').innerText = nomorAntrian;
         document.getElementById('displayNama').innerText = nama;
         document.getElementById('displayKategori').innerText = kategori.toUpperCase();
         ticketResult.classList.remove('hidden');
         form.reset();
+
+      } catch (err) {
+        alert('Gagal mengambil antrian: ' + err.message);
+      } finally {
+        btnSubmit.disabled = false;
+        btnSubmit.innerText = 'Ambil Nomor Antrian';
       }
     });
   </script>
