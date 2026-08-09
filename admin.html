@@ -1,37 +1,150 @@
-<!-- admin.html -->
-<h2>Panel Loket Admin</h2>
-<div id="daftarMenunggu"></div>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-  const supabase = supabase.createClient('URL_SUPABASE_ANDA', 'API_KEY_ANDA');
-
-  // 1. Ambil & Tampilkan Antrian Masuk
-  async function loadAntrian() {
-    const { data } = await supabase.from('antrian').select('*').eq('status', 'menunggu');
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel Admin - Balai Lelang Tribik</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #5E0006; color: #EED9B9; }
+    .glass-box { background: rgba(155, 15, 6, 0.3); backdrop-filter: blur(12px); border: 1px solid rgba(213, 62, 15, 0.3); }
+  </style>
+</head>
+<body class="p-6 min-h-screen">
+  <div class="max-w-6xl mx-auto space-y-6">
     
-    let html = '';
-    data.forEach(item => {
-      html += `<div>
-        <strong>${item.nomor_antrian}</strong> - ${item.nama} (${item.kategori})
-        <button onclick="panggilAntrian('${item.id}')">Panggil Ke Loket 1</button>
-      </div>`;
-    });
-    document.getElementById('daftarMenunggu').innerHTML = html;
-  }
+    <!-- Header Admin -->
+    <div class="flex justify-between items-center glass-box p-5 rounded-2xl">
+      <div>
+        <h1 class="text-2xl font-bold text-[#EED9B9]">Panel Kontrol Loket Admin</h1>
+        <p class="text-xs opacity-75">Balai Lelang Tribik</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <label class="text-xs font-bold uppercase">Pilih Loket Anda:</label>
+        <select id="selectLoket" class="bg-[#5E0006] text-[#EED9B9] border border-[#D53E0F] px-4 py-2 rounded-xl text-sm font-bold">
+          <option value="1">Loket 1</option>
+          <option value="2">Loket 2</option>
+          <option value="3">Loket 3</option>
+        </select>
+      </div>
+    </div>
 
-  // 2. Ubah Status Antrian Menjadi 'dipanggil'
-  async function panggilAntrian(id) {
-    await supabase.from('antrian').update({ status: 'dipanggil', loket: '1' }).eq('id', id);
-    loadAntrian(); // Refresh daftar
-  }
+    <!-- Layout Grid Admin -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <!-- Daftar Antrian Menunggu -->
+      <div class="glass-box p-5 rounded-2xl space-y-4">
+        <h2 class="font-bold text-lg text-[#EED9B9] border-b border-[#D53E0F] pb-2">Daftar Antrian Menunggu</h2>
+        <div id="daftarAntrian" class="space-y-3 max-h-[500px] overflow-y-auto pr-2">
+          <p class="text-sm opacity-50">Memuat data antrian...</p>
+        </div>
+      </div>
 
-  // 3. Mendengarkan Input Baru Secara Realtime Dari Ambil Unit
-  supabase.channel('antrian-realtime')
-    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'antrian' }, () => {
-      loadAntrian(); // Otomatis refresh jika ada pelanggan baru
-    })
-    .subscribe();
+      <!-- Detail Antrian Dipanggil -->
+      <div class="glass-box p-5 rounded-2xl flex flex-col justify-between space-y-6">
+        <div>
+          <h2 class="font-bold text-lg text-[#EED9B9] border-b border-[#D53E0F] pb-2">Sedang Dilayani Saat Ini</h2>
+          <div id="aktifBox" class="text-center py-10 space-y-3">
+            <div id="aktifNomor" class="text-6xl font-black text-[#D53E0F]">--</div>
+            <div id="aktifNama" class="text-xl font-medium text-[#EED9B9]">Belum ada antrian dipanggil</div>
+          </div>
+        </div>
 
-  loadAntrian();
-</script>
+        <div class="grid grid-cols-2 gap-3">
+          <button onclick="selesaikanAntrian()" class="py-3 bg-green-700 hover:bg-green-800 text-white font-bold rounded-xl shadow">
+            Selesai
+          </button>
+          <button onclick="panggilUlang()" class="py-3 bg-[#D53E0F] hover:bg-[#9B0F06] text-[#EED9B9] font-bold rounded-xl shadow">
+            Panggil Ulang Suara
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // Koneksi Supabase dengan Alamat & Key Anda
+    const SUPABASE_URL = 'https://oapbpywsvgzegrhfhghn.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_2e3hma5Eo6DXz6_i034kDQ_rQl9lOhK';
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let currentActiveId = null;
+
+    async function loadAntrian() {
+      const { data, error } = await supabaseClient
+        .from('reservasi')
+        .select('*')
+        .eq('status', 'menunggu')
+        .order('id', { ascending: true });
+
+      const container = document.getElementById('daftarAntrian');
+      container.innerHTML = '';
+
+      if (error || !data || data.length === 0) {
+        container.innerHTML = '<p class="text-sm opacity-50">Tidak ada antrian menunggu.</p>';
+        return;
+      }
+
+      data.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'flex items-center justify-between p-3 rounded-xl bg-[#5E0006] border border-[#D53E0F]/50';
+        div.innerHTML = `
+          <div>
+            <span class="text-lg font-bold text-[#EED9B9]">${item.nomor_antrian}</span>
+            <span class="text-xs ml-2 opacity-75">(${item.nama})</span>
+            <div class="text-[10px] uppercase text-[#D53E0F] font-semibold">${item.kategori}</div>
+          </div>
+          <button onclick="panggilAntrian(${item.id}, '${item.nomor_antrian}', '${item.nama}')" 
+                  class="px-4 py-2 bg-[#D53E0F] text-[#EED9B9] font-bold text-xs rounded-lg hover:bg-[#9B0F06]">
+            Panggil
+          </button>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    async function panggilAntrian(id, nomor, nama) {
+      const loket = document.getElementById('selectLoket').value;
+      currentActiveId = id;
+
+      const { error } = await supabaseClient
+        .from('reservasi')
+        .update({ status: 'dipanggil', loket: loket })
+        .eq('id', id);
+
+      if (!error) {
+        document.getElementById('aktifNomor').innerText = nomor;
+        document.getElementById('aktifNama').innerText = nama;
+        loadAntrian();
+      }
+    }
+
+    async function selesaikanAntrian() {
+      if (!currentActiveId) return;
+      await supabaseClient.from('reservasi').update({ status: 'selesai' }).eq('id', currentActiveId);
+      currentActiveId = null;
+      document.getElementById('aktifNomor').innerText = '--';
+      document.getElementById('aktifNama').innerText = 'Silakan panggil antrian berikutnya';
+    }
+
+    function panggilUlang() {
+      const nomor = document.getElementById('aktifNomor').innerText;
+      const loket = document.getElementById('selectLoket').value;
+      if (nomor !== '--' && currentActiveId) {
+        supabaseClient.from('reservasi').update({ status: 'dipanggil', loket: loket }).eq('id', currentActiveId);
+      }
+    }
+
+    // Subscribe Realtime updates dari Supabase
+    supabaseClient.channel('admin-channel')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'reservasi' }, () => {
+        loadAntrian();
+      })
+      .subscribe();
+
+    loadAntrian();
+  </script>
+</body>
+</html>
