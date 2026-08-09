@@ -2,11 +2,11 @@
 <html lang="id" class="dark">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Ambil Antrian - Balai Lelang Tribik</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <script>
     tailwind.config = {
       darkMode: 'class',
@@ -19,99 +19,112 @@
   </script>
   <style>
     body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    
+    /* Dynamic Viewport & Glassmorphism Optimization for Mobile */
     .glass-card {
-      background: rgba(94, 0, 6, 0.75);
-      backdrop-filter: blur(24px);
-      -webkit-backdrop-filter: blur(24px);
-      border: 1px solid rgba(238, 217, 185, 0.2);
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+      background: rgba(94, 0, 6, 0.82);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(238, 217, 185, 0.22);
+      box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.65);
     }
+    
     .input-glass {
-      background: rgba(30, 0, 2, 0.6);
+      background: rgba(30, 0, 2, 0.65);
       backdrop-filter: blur(12px);
-      border: 1px solid rgba(213, 62, 15, 0.35);
+      border: 1.5px solid rgba(213, 62, 15, 0.4);
     }
-    .input-glass:focus {
+    
+    .input-glass:focus-within, .input-glass:focus {
       border-color: #D53E0F;
-      box-shadow: 0 0 0 3px rgba(213, 62, 15, 0.3);
+      box-shadow: 0 0 0 4px rgba(213, 62, 15, 0.25);
     }
-    @keyframes slideIn {
+
+    @keyframes slideInUp {
       from { transform: translateY(100%); opacity: 0; }
       to { transform: translateY(0); opacity: 1; }
     }
-    .toast-slide { animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    .toast-slide { animation: slideInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
   </style>
 </head>
-<body class="min-h-screen bg-gradient-to-br from-[#3a0003] via-[#5E0006] to-[#1e0002] text-[#EED9B9] flex items-center justify-center p-4 antialiased relative overflow-hidden">
+<body class="min-h-dvh bg-gradient-to-br from-[#3a0003] via-[#5E0006] to-[#1e0002] text-[#EED9B9] flex flex-col items-center justify-center p-4 sm:p-6 antialiased relative overflow-x-hidden">
 
-  <!-- Toast Container -->
-  <div id="toastContainer" class="fixed bottom-6 right-6 z-50 flex flex-col gap-3 pointer-events-none"></div>
+  <!-- Toast Container Positioned for Mobile Screens -->
+  <div id="toastContainer" class="fixed bottom-4 inset-x-4 md:left-auto md:right-6 md:bottom-6 z-50 flex flex-col gap-2.5 pointer-events-none max-w-sm mx-auto"></div>
 
-  <!-- Background Glow Orbs -->
-  <div class="absolute -top-32 -left-32 w-96 h-96 bg-[#D53E0F]/20 rounded-full blur-3xl pointer-events-none"></div>
-  <div class="absolute -bottom-32 -right-32 w-96 h-96 bg-[#9B0F06]/30 rounded-full blur-3xl pointer-events-none"></div>
+  <!-- Background Ambient Glow Orbs -->
+  <div class="absolute -top-24 -left-24 w-72 h-72 sm:w-96 sm:h-96 bg-[#D53E0F]/20 rounded-full blur-3xl pointer-events-none"></div>
+  <div class="absolute -bottom-24 -right-24 w-72 h-72 sm:w-96 sm:h-96 bg-[#9B0F06]/30 rounded-full blur-3xl pointer-events-none"></div>
 
-  <div class="w-full max-w-md glass-card rounded-[2.5rem] p-8 md:p-10 relative z-10 space-y-8">
+  <!-- Main Card Container -->
+  <div class="w-full max-w-md glass-card rounded-3xl sm:rounded-[2.5rem] p-6 sm:p-8 md:p-10 relative z-10 space-y-6 sm:space-y-8 my-auto">
     
     <!-- Header -->
-    <div class="text-center space-y-3">
-      <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-tr from-[#9B0F06] to-[#D53E0F] border border-[#EED9B9]/25 shadow-xl text-[#EED9B9] font-black text-2xl tracking-wider">
+    <div class="text-center space-y-2.5">
+      <div class="inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-tr from-[#9B0F06] to-[#D53E0F] border border-[#EED9B9]/30 shadow-xl text-[#EED9B9] font-black text-2xl tracking-wider ring-4 ring-[#D53E0F]/20">
         T
       </div>
       <div>
-        <h1 class="text-2xl font-extrabold tracking-tight text-[#EED9B9]">Balai Lelang Tribik</h1>
-        <p class="text-xs uppercase tracking-widest text-[#EED9B9]/75 mt-1 font-semibold">Sistem Antrian Digital Modern</p>
+        <h1 class="text-xl sm:text-2xl font-black tracking-tight text-white">Balai Lelang Tribik</h1>
+        <p class="text-[11px] sm:text-xs uppercase tracking-widest text-[#EED9B9]/75 mt-1 font-bold">Sistem Antrian Digital Modern</p>
       </div>
     </div>
 
     <!-- Form Input -->
-    <form id="formAntrian" class="space-y-5">
-      <div class="space-y-2">
-        <label class="block text-xs font-bold uppercase tracking-wider text-[#EED9B9]/90">Nama Lengkap</label>
+    <form id="formAntrian" class="space-y-4 sm:space-y-5">
+      <div class="space-y-1.5">
+        <label for="nama" class="block text-[11px] sm:text-xs font-bold uppercase tracking-wider text-[#EED9B9]/90">Nama Lengkap</label>
         <div class="relative">
+          <!-- Text size set to 16px (text-base) on mobile to prevent iOS Safari auto-zoom on input focus -->
           <input type="text" id="nama" required placeholder="Masukkan nama lengkap Anda" 
-                 class="w-full px-4 py-4 rounded-2xl input-glass text-[#EED9B9] placeholder-[#EED9B9]/40 focus:outline-none transition-all font-medium text-sm">
+                 class="w-full px-4 py-3.5 sm:py-4 rounded-xl sm:rounded-2xl input-glass text-[#EED9B9] placeholder-[#EED9B9]/40 focus:outline-none transition-all font-semibold text-base sm:text-sm">
         </div>
       </div>
 
-      <div class="space-y-2">
-        <label class="block text-xs font-bold uppercase tracking-wider text-[#EED9B9]/90">Pilih Kategori Layanan</label>
+      <div class="space-y-1.5">
+        <label for="kategori" class="block text-[11px] sm:text-xs font-bold uppercase tracking-wider text-[#EED9B9]/90">Pilih Kategori Layanan</label>
         <div class="relative">
-          <select id="kategori" class="w-full px-4 py-4 rounded-2xl input-glass text-[#EED9B9] focus:outline-none appearance-none transition-all font-medium text-sm cursor-pointer">
+          <select id="kategori" class="w-full pl-4 pr-10 py-3.5 sm:py-4 rounded-xl sm:rounded-2xl input-glass text-[#EED9B9] focus:outline-none appearance-none transition-all font-semibold text-base sm:text-sm cursor-pointer">
             <option value="unit" class="bg-[#5E0006] text-[#EED9B9]">🚚 Pengambilan Unit (Kode U)</option>
             <option value="bpkb" class="bg-[#5E0006] text-[#EED9B9]">📄 Pengambilan BPKB (Kode B)</option>
             <option value="pelunasan" class="bg-[#5E0006] text-[#EED9B9]">💳 Pelunasan (Kode P)</option>
           </select>
+          <!-- Custom Dropdown Arrow for Mobile -->
+          <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-[#EED9B9]/70">
+            <svg class="w-5 h-5 fill-current" viewBox="0 0 20 20">
+              <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" fill-rule="evenodd"></path>
+            </svg>
+          </div>
         </div>
       </div>
 
       <button type="submit" id="btnSubmit" 
-              class="w-full py-4 rounded-2xl font-bold bg-gradient-to-r from-[#D53E0F] to-[#9B0F06] hover:from-[#e04615] hover:to-[#b01208] text-[#EED9B9] transition-all duration-300 shadow-xl shadow-black/40 text-sm tracking-wider uppercase">
+              class="w-full py-3.5 sm:py-4 rounded-xl sm:rounded-2xl font-extrabold bg-gradient-to-r from-[#D53E0F] to-[#9B0F06] hover:from-[#e04615] hover:to-[#b01208] text-[#EED9B9] transition-all duration-200 shadow-lg shadow-black/50 text-xs sm:text-sm tracking-wider uppercase active:scale-[0.98] touch-manipulation">
         Ambil Nomor Antrian
       </button>
     </form>
 
     <!-- Tampilan Tiket Setelah Berhasil -->
-    <div id="ticketResult" class="hidden text-center p-6 rounded-3xl bg-black/50 border border-[#D53E0F]/50 backdrop-blur-md space-y-4">
+    <div id="ticketResult" class="hidden text-center p-5 sm:p-6 rounded-2xl sm:rounded-3xl bg-black/60 border border-[#D53E0F]/50 backdrop-blur-md space-y-4">
       <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-bold border border-emerald-500/30">
         <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Tiket Berhasil Dibuat
       </div>
       <div>
-        <div class="text-xs uppercase tracking-widest text-[#EED9B9]/60 font-semibold mb-1">Nomor Antrian Anda</div>
-        <div id="displayNomor" class="text-6xl font-black text-white tracking-wider drop-shadow-lg">--</div>
+        <div class="text-[11px] uppercase tracking-widest text-[#EED9B9]/70 font-semibold mb-1">Nomor Antrian Anda</div>
+        <div id="displayNomor" class="text-5xl sm:text-6xl font-black text-white tracking-wider drop-shadow-lg">--</div>
       </div>
-      <div class="pt-2 border-t border-[#EED9B9]/10">
-        <div id="displayNama" class="text-lg font-bold text-[#EED9B9]">--</div>
-        <div id="displayKategori" class="text-[11px] uppercase tracking-wider px-3 py-1 bg-[#D53E0F]/30 border border-[#D53E0F]/40 rounded-full inline-block text-[#EED9B9] mt-2 font-bold">--</div>
+      <div class="pt-3 border-t border-[#EED9B9]/15">
+        <div id="displayNama" class="text-base sm:text-lg font-bold text-[#EED9B9] truncate px-2">--</div>
+        <div id="displayKategori" class="text-[10px] sm:text-[11px] uppercase tracking-wider px-3 py-1 bg-[#D53E0F]/30 border border-[#D53E0F]/40 rounded-full inline-block text-[#EED9B9] mt-2 font-extrabold">--</div>
       </div>
-      <p class="text-xs text-[#EED9B9]/70 pt-1">Silakan pantau layar panggilan di ruang tunggu.</p>
-      <button onclick="location.reload()" class="w-full py-2.5 bg-white/10 hover:bg-white/20 text-[#EED9B9] font-bold text-xs rounded-xl transition-all">
+      <p class="text-xs text-[#EED9B9]/70 pt-1 leading-relaxed">Silakan pantau layar panggilan di ruang tunggu.</p>
+      <button onclick="location.reload()" class="w-full py-3 bg-white/10 hover:bg-white/20 active:scale-95 text-[#EED9B9] font-bold text-xs rounded-xl transition-all border border-white/10 touch-manipulation">
         Ambil Antrian Baru
       </button>
     </div>
 
     <!-- Footer info -->
-    <div class="text-center text-[11px] text-[#EED9B9]/50 font-medium">
+    <div class="text-center text-[10px] sm:text-[11px] text-[#EED9B9]/50 font-semibold tracking-wide">
       &copy; 2026 Balai Lelang Tribik. All rights reserved.
     </div>
   </div>
@@ -124,19 +137,19 @@
     function showToast(message, type = 'success') {
       const container = document.getElementById('toastContainer');
       const toast = document.createElement('div');
-      toast.className = `pointer-events-auto flex items-center gap-3 px-5 py-4 rounded-2xl shadow-2xl backdrop-blur-xl border toast-slide transition-all ${
+      toast.className = `pointer-events-auto flex items-center gap-3 px-4 py-3.5 rounded-xl sm:rounded-2xl shadow-2xl backdrop-blur-xl border toast-slide transition-all ${
         type === 'success' 
-          ? 'bg-emerald-950/90 border-emerald-500/40 text-emerald-200' 
-          : 'bg-red-950/90 border-red-500/40 text-red-200'
+          ? 'bg-emerald-950/95 border-emerald-500/50 text-emerald-200' 
+          : 'bg-red-950/95 border-red-500/50 text-red-200'
       }`;
       
       const icon = type === 'success' ? '✨' : '⚠️';
-      toast.innerHTML = `<span class="text-lg">${icon}</span> <p class="text-xs font-bold tracking-wide">${message}</p>`;
+      toast.innerHTML = `<span class="text-base sm:text-lg">${icon}</span> <p class="text-xs font-bold tracking-wide leading-tight">${message}</p>`;
       
       container.appendChild(toast);
       setTimeout(() => {
         toast.style.opacity = '0';
-        toast.style.transform = 'translateY(20px)';
+        toast.style.transform = 'translateY(10px)';
         setTimeout(() => toast.remove(), 300);
       }, 4000);
     }
