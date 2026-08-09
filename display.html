@@ -1,30 +1,95 @@
-<!-- display.html -->
-<h1 id="nomorSedangDipanggil">--</h1>
-<h3 id="loketTujuan">Loket --</h3>
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Display Live Antrian - Balai Lelang Tribik</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #5E0006; color: #EED9B9; }
+    .glass-display {
+      background: rgba(155, 15, 6, 0.35);
+      backdrop-filter: blur(20px);
+      border: 2px solid #D53E0F;
+    }
+  </style>
+</head>
+<body class="min-h-screen p-8 flex flex-col justify-between">
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-  const supabase = supabase.createClient('URL_SUPABASE_ANDA', 'API_KEY_ANDA');
+  <!-- Header TV -->
+  <div class="flex justify-between items-center border-b border-[#D53E0F] pb-4">
+    <div>
+      <h1 class="text-3xl font-black text-[#EED9B9]">BALAI LELANG TRIBIK</h1>
+      <p class="text-sm opacity-75">Papan Informasi Panggilan Antrian Real-time</p>
+    </div>
+    <div id="clock" class="text-2xl font-bold text-[#EED9B9]">00:00:00</div>
+  </div>
 
-  // Mendengarkan Perubahan Data saat Admin Mengubah Status
-  supabase.channel('antrian-live')
-    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'antrian' }, payload => {
-      const dataBaru = payload.new;
-      
-      if (dataBaru.status === 'dipanggil') {
-        // Tampilkan ke Layar TV
-        document.getElementById('nomorSedangDipanggil').innerText = dataBaru.nomor_antrian;
-        document.getElementById('loketTujuan').innerText = 'Loket ' + dataBaru.loket;
+  <!-- Bento Grid Main Display -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 my-auto">
+    <!-- Panggilan Utama -->
+    <div class="lg:col-span-2 glass-display p-10 rounded-3xl text-center space-y-6 shadow-2xl">
+      <span class="text-sm font-bold uppercase tracking-widest bg-[#D53E0F] text-[#EED9B9] px-6 py-2 rounded-full">
+        Nomor Antrian Sedang Dipanggil
+      </span>
+      <div id="liveNomor" class="text-9xl font-black text-[#EED9B9] tracking-widest my-4">--</div>
+      <div id="liveLoket" class="text-4xl font-extrabold text-[#D53E0F]">Silakan Menuju Loket --</div>
+    </div>
 
-        // Bunyikan Suara Panggilan Otomatis
-        bunyikanPanggilan(dataBaru.nomor_antrian, dataBaru.loket);
+    <!-- Informasi / Pengumuman -->
+    <div class="glass-display p-8 rounded-3xl flex flex-col justify-center space-y-4 text-center">
+      <h3 class="text-xl font-bold border-b border-[#D53E0F] pb-2">Informasi Layanan</h3>
+      <p class="text-sm opacity-80 leading-relaxed">
+        Harap menyiapkan dokumen persyaratan (KTP, Slip Setoran, BPKB) sebelum menuju ke loket panggilan.
+      </p>
+      <div class="p-4 bg-[#5E0006] rounded-2xl border border-[#D53E0F]">
+        <div class="text-xs opacity-75">Status Sistem</div>
+        <div class="text-green-400 font-bold text-sm">● Terhubung Real-Time</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer Running Text -->
+  <div class="bg-[#9B0F06] p-3 rounded-xl border border-[#D53E0F] text-center font-bold text-sm">
+    Selamat Datang di Balai Lelang Tribik - Utamakan Ketertiban dan Keselamatan.
+  </div>
+
+  <script>
+    // Koneksi Supabase dengan Alamat & Key Anda
+    const SUPABASE_URL = 'https://oapbpywsvgzegrhfhghn.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_2e3hma5Eo6DXz6_i034kDQ_rQl9lOhK';
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    // Jam Digital
+    setInterval(() => {
+      document.getElementById('clock').innerText = new Date().toLocaleTimeString('id-ID');
+    }, 1000);
+
+    // Panggilan Suara Otomatis
+    function bunyiPanggilan(nomor, loket) {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const teks = `Nomor antrian ${nomor}, silakan menuju ke loket ${loket}`;
+        const uttr = new SpeechSynthesisUtterance(teks);
+        uttr.lang = 'id-ID';
+        uttr.rate = 0.9;
+        window.speechSynthesis.speak(uttr);
       }
-    })
-    .subscribe();
+    }
 
-  function bunyikanPanggilan(nomor, loket) {
-    const ucapan = new SpeechSynthesisUtterance(`Nomor antrian ${nomor}, silahkan menuju ke loket ${loket}`);
-    ucapan.lang = 'id-ID';
-    window.speechSynthesis.speak(ucapan);
-  }
-</script>
+    // Realtime Listener Supabase
+    supabaseClient.channel('display-channel')
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'reservasi' }, (payload) => {
+        const dataBaru = payload.new;
+        if (dataBaru.status === 'dipanggil') {
+          document.getElementById('liveNomor').innerText = dataBaru.nomor_antrian;
+          document.getElementById('liveLoket').innerText = `Silakan Menuju Loket ${dataBaru.loket}`;
+          bunyiPanggilan(dataBaru.nomor_antrian, dataBaru.loket);
+        }
+      })
+      .subscribe();
+  </script>
+</body>
+</html>
