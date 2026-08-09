@@ -70,6 +70,8 @@
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     let currentActiveId = null;
+    let currentActiveNomor = '--';
+    let currentActiveNama = '';
 
     async function loadAntrian() {
       const { data, error } = await supabaseClient
@@ -107,16 +109,23 @@
     async function panggilAntrian(id, nomor, nama) {
       const loket = document.getElementById('selectLoket').value;
       currentActiveId = id;
+      currentActiveNomor = nomor;
+      currentActiveNama = nama;
 
       const { error } = await supabaseClient
         .from('reservasi')
-        .update({ status: 'dipanggil', loket: loket })
+        .update({ 
+          status: 'dipanggil', 
+          loket: loket 
+        })
         .eq('id', id);
 
       if (!error) {
         document.getElementById('aktifNomor').innerText = nomor;
         document.getElementById('aktifNama').innerText = nama;
         loadAntrian();
+      } else {
+        alert('Gagal memanggil antrian: ' + error.message);
       }
     }
 
@@ -126,22 +135,28 @@
       currentActiveId = null;
       document.getElementById('aktifNomor').innerText = '--';
       document.getElementById('aktifNama').innerText = 'Silakan panggil antrian berikutnya';
+      loadAntrian();
     }
 
-    function panggilUlang() {
-      const nomor = document.getElementById('aktifNomor').innerText;
+    async function panggilUlang() {
+      if (!currentActiveId) return;
       const loket = document.getElementById('selectLoket').value;
-      if (nomor !== '--' && currentActiveId) {
-        supabaseClient.from('reservasi').update({ status: 'dipanggil', loket: loket }).eq('id', currentActiveId);
-      }
+      
+      // Update status dengan trigger
+      await supabaseClient
+        .from('reservasi')
+        .update({ status: 'dipanggil', loket: loket })
+        .eq('id', currentActiveId);
     }
 
+    // Synchronize Realtime + Polling
     supabaseClient.channel('admin-channel')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'reservasi' }, () => {
         loadAntrian();
       })
       .subscribe();
 
+    setInterval(loadAntrian, 3000);
     loadAntrian();
   </script>
 </body>
