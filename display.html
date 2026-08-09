@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" class="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,97 +8,131 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800;900&display=swap" rel="stylesheet">
   <style>
-    body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #5E0006; color: #EED9B9; }
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
     .glass-display {
-      background: rgba(155, 15, 6, 0.35);
-      backdrop-filter: blur(20px);
-      border: 2px solid #D53E0F;
+      background: rgba(120, 10, 14, 0.45);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(213, 62, 15, 0.35);
+      box-shadow: 0 30px 60px rgba(0, 0, 0, 0.45);
+    }
+    .pulse-glow {
+      animation: pulseGlow 2.5s infinite;
+    }
+    @keyframes pulseGlow {
+      0%, 100% { box-shadow: 0 0 25px rgba(213, 62, 15, 0.3); }
+      50% { box-shadow: 0 0 45px rgba(213, 62, 15, 0.6); }
     }
   </style>
 </head>
-<body class="min-h-screen p-6 flex flex-col justify-between relative">
+<body class="min-h-screen bg-gradient-to-br from-[#3a0003] via-[#5E0006] to-[#1e0002] text-[#EED9B9] p-6 lg:p-8 flex flex-col justify-between overflow-hidden relative">
 
-  <!-- Banner Pembuka Blokir Suara -->
-  <div id="audioOverlay" onclick="enableAudio()" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex flex-col items-center justify-center p-6 text-center cursor-pointer">
-    <div class="bg-[#9B0F06] border-2 border-[#D53E0F] p-8 rounded-3xl max-w-lg shadow-2xl space-y-4">
-      <div class="text-5xl">🔊</div>
-      <h2 class="text-2xl font-black text-[#EED9B9]">Klik Layar di Mana Saja</h2>
-      <p class="text-sm opacity-90 text-[#EED9B9]">Untuk mengaktifkan fitur Panggilan Suara Otomatis pada TV Display ini.</p>
-      <button class="px-6 py-3 bg-[#D53E0F] text-[#EED9B9] font-bold rounded-xl shadow-lg">
-        Aktifkan Suara Panggilan
+  <!-- Glow Orbs -->
+  <div class="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-[#D53E0F]/15 rounded-full blur-[120px] pointer-events-none"></div>
+  <div class="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-[#9B0F06]/20 rounded-full blur-[120px] pointer-events-none"></div>
+
+  <!-- Audio Gate Overlay -->
+  <div id="audioOverlay" onclick="enableAudio()" class="fixed inset-0 bg-black/85 backdrop-blur-xl z-50 flex flex-col items-center justify-center p-6 text-center cursor-pointer transition-opacity duration-500">
+    <div class="bg-gradient-to-br from-[#9B0F06] to-[#5E0006] border-2 border-[#D53E0F] p-10 rounded-[2.5rem] max-w-md shadow-2xl space-y-5">
+      <div class="w-20 h-20 mx-auto rounded-3xl bg-[#D53E0F]/30 border border-[#D53E0F] flex items-center justify-center text-4xl shadow-inner">
+        🔊
+      </div>
+      <div class="space-y-2">
+        <h2 class="text-2xl font-black text-[#EED9B9]">Aktifkan Suara Display</h2>
+        <p class="text-xs opacity-80 text-[#EED9B9] leading-relaxed">Klik di mana saja untuk mengaktifkan sistem pengeras suara otomatis pada layar TV Antrian.</p>
+      </div>
+      <button class="w-full py-4 bg-[#D53E0F] hover:bg-[#b8330c] text-[#EED9B9] font-extrabold rounded-2xl shadow-lg tracking-wider uppercase text-sm transition-all">
+        Mulai & Aktifkan Suara
       </button>
     </div>
   </div>
 
   <!-- Header TV -->
-  <div class="flex justify-between items-center border-b border-[#D53E0F] pb-4">
-    <div>
-      <h1 class="text-3xl font-black text-[#EED9B9]">BALAI LELANG TRIBIK</h1>
-      <p class="text-sm opacity-75">Papan Informasi Panggilan Antrian Real-time</p>
+  <header class="flex justify-between items-center border-b border-[#D53E0F]/40 pb-6 relative z-10">
+    <div class="flex items-center gap-4">
+      <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#9B0F06] to-[#D53E0F] border border-[#EED9B9]/30 flex items-center justify-center text-xl font-black shadow-lg">
+        T
+      </div>
+      <div>
+        <h1 class="text-2xl lg:text-3xl font-black text-white tracking-tight">BALAI LELANG TRIBIK</h1>
+        <p class="text-xs uppercase tracking-widest text-[#EED9B9]/75 font-semibold">Live Queue Display System</p>
+      </div>
     </div>
     <div class="flex items-center gap-4">
-      <div id="audioStatus" class="text-xs px-3 py-1 bg-yellow-600/50 rounded-full font-bold">🔇 Suara Belum Aktif</div>
-      <div id="clock" class="text-2xl font-bold text-[#EED9B9]">00:00:00</div>
+      <div id="audioStatus" class="text-xs px-4 py-2 bg-yellow-600/30 border border-yellow-500/40 rounded-full font-bold flex items-center gap-2 backdrop-blur-md">
+        <span class="w-2 h-2 rounded-full bg-yellow-400"></span> Suara Nonaktif
+      </div>
+      <div class="px-5 py-2 bg-black/40 border border-[#D53E0F]/30 rounded-2xl backdrop-blur-md text-2xl font-mono font-black text-white tracking-widest shadow-inner" id="clock">
+        00:00:00
+      </div>
     </div>
-  </div>
+  </header>
 
-  <!-- Bento Grid Main Display (3 Kategori Layanan) -->
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 my-auto">
+  <!-- 3 Panels Grid Display -->
+  <main class="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 my-auto relative z-10">
     
     <!-- 1. Pengambilan Unit -->
-    <div class="glass-display p-6 rounded-3xl text-center space-y-4 shadow-2xl flex flex-col justify-between">
-      <span class="text-xs font-bold uppercase tracking-widest bg-[#D53E0F] text-[#EED9B9] px-4 py-1.5 rounded-full inline-block mx-auto">
-        Pengambilan Unit
-      </span>
-      <div>
-        <div id="nomorUnit" class="text-7xl font-black text-[#EED9B9] tracking-widest my-2">--</div>
-        <div id="namaUnit" class="text-lg font-bold text-[#EED9B9] opacity-80 truncate">Tidak ada antrian</div>
+    <div class="glass-display p-8 lg:p-10 rounded-[2.5rem] text-center flex flex-col justify-between space-y-6 pulse-glow">
+      <div class="inline-block mx-auto">
+        <span class="text-xs font-black uppercase tracking-widest bg-gradient-to-r from-[#D53E0F] to-[#b8330c] text-white px-5 py-2 rounded-full shadow-md">
+          🚚 Pengambilan Unit
+        </span>
       </div>
-      <div id="loketUnit" class="text-xl font-extrabold text-[#D53E0F] bg-[#5E0006]/50 py-2 rounded-xl border border-[#D53E0F]/40">
-        Loket: -
+      <div class="space-y-2 py-4">
+        <div id="nomorUnit" class="text-7xl lg:text-8xl font-black text-white tracking-wider drop-shadow-md">--</div>
+        <div id="namaUnit" class="text-lg font-bold text-[#EED9B9]/90 truncate px-2">Tidak ada antrian</div>
+      </div>
+      <div class="bg-black/40 border border-[#D53E0F]/30 py-3.5 px-6 rounded-2xl backdrop-blur-md">
+        <div id="loketUnit" class="text-xl lg:text-2xl font-black text-[#D53E0F] tracking-wide">Loket: -</div>
       </div>
     </div>
 
     <!-- 2. Pengambilan BPKB -->
-    <div class="glass-display p-6 rounded-3xl text-center space-y-4 shadow-2xl flex flex-col justify-between">
-      <span class="text-xs font-bold uppercase tracking-widest bg-[#D53E0F] text-[#EED9B9] px-4 py-1.5 rounded-full inline-block mx-auto">
-        Pengambilan BPKB
-      </span>
-      <div>
-        <div id="nomorBpkb" class="text-7xl font-black text-[#EED9B9] tracking-widest my-2">--</div>
-        <div id="namaBpkb" class="text-lg font-bold text-[#EED9B9] opacity-80 truncate">Tidak ada antrian</div>
+    <div class="glass-display p-8 lg:p-10 rounded-[2.5rem] text-center flex flex-col justify-between space-y-6 pulse-glow">
+      <div class="inline-block mx-auto">
+        <span class="text-xs font-black uppercase tracking-widest bg-gradient-to-r from-[#D53E0F] to-[#b8330c] text-white px-5 py-2 rounded-full shadow-md">
+          📄 Pengambilan BPKB
+        </span>
       </div>
-      <div id="loketBpkb" class="text-xl font-extrabold text-[#D53E0F] bg-[#5E0006]/50 py-2 rounded-xl border border-[#D53E0F]/40">
-        Loket: -
+      <div class="space-y-2 py-4">
+        <div id="nomorBpkb" class="text-7xl lg:text-8xl font-black text-white tracking-wider drop-shadow-md">--</div>
+        <div id="namaBpkb" class="text-lg font-bold text-[#EED9B9]/90 truncate px-2">Tidak ada antrian</div>
+      </div>
+      <div class="bg-black/40 border border-[#D53E0F]/30 py-3.5 px-6 rounded-2xl backdrop-blur-md">
+        <div id="loketBpkb" class="text-xl lg:text-2xl font-black text-[#D53E0F] tracking-wide">Loket: -</div>
       </div>
     </div>
 
     <!-- 3. Pelunasan -->
-    <div class="glass-display p-6 rounded-3xl text-center space-y-4 shadow-2xl flex flex-col justify-between">
-      <span class="text-xs font-bold uppercase tracking-widest bg-[#D53E0F] text-[#EED9B9] px-4 py-1.5 rounded-full inline-block mx-auto">
-        Pelunasan
-      </span>
-      <div>
-        <div id="nomorPelunasan" class="text-7xl font-black text-[#EED9B9] tracking-widest my-2">--</div>
-        <div id="namaPelunasan" class="text-lg font-bold text-[#EED9B9] opacity-80 truncate">Tidak ada antrian</div>
+    <div class="glass-display p-8 lg:p-10 rounded-[2.5rem] text-center flex flex-col justify-between space-y-6 pulse-glow">
+      <div class="inline-block mx-auto">
+        <span class="text-xs font-black uppercase tracking-widest bg-gradient-to-r from-[#D53E0F] to-[#b8330c] text-white px-5 py-2 rounded-full shadow-md">
+          💳 Pelunasan
+        </span>
       </div>
-      <div id="loketPelunasan" class="text-xl font-extrabold text-[#D53E0F] bg-[#5E0006]/50 py-2 rounded-xl border border-[#D53E0F]/40">
-        Loket: -
+      <div class="space-y-2 py-4">
+        <div id="nomorPelunasan" class="text-7xl lg:text-8xl font-black text-white tracking-wider drop-shadow-md">--</div>
+        <div id="namaPelunasan" class="text-lg font-bold text-[#EED9B9]/90 truncate px-2">Tidak ada antrian</div>
+      </div>
+      <div class="bg-black/40 border border-[#D53E0F]/30 py-3.5 px-6 rounded-2xl backdrop-blur-md">
+        <div id="loketPelunasan" class="text-xl lg:text-2xl font-black text-[#D53E0F] tracking-wide">Loket: -</div>
       </div>
     </div>
 
-  </div>
+  </main>
 
-  <!-- Status Koneksi & Running Text -->
-  <div class="space-y-3">
-    <div class="flex justify-between items-center px-2">
-      <div class="text-xs opacity-75">Harap menyiapkan dokumen persyaratan sebelum menuju ke loket panggilan.</div>
-      <div id="connectionStatus" class="text-green-400 font-bold text-xs">● Terhubung Real-Time</div>
+  <!-- Footer & Running Text -->
+  <footer class="space-y-3 relative z-10">
+    <div class="flex justify-between items-center px-4 text-xs font-medium text-[#EED9B9]/75">
+      <p>💡 Harap menyiapkan dokumen identitas / persyaratan sebelum menuju ke loket panggilan.</p>
+      <div id="connectionStatus" class="flex items-center gap-2 text-emerald-400 font-bold">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span> Terhubung Real-Time
+      </div>
     </div>
-    <div class="bg-[#9B0F06] p-3 rounded-xl border border-[#D53E0F] text-center font-bold text-sm">
-      Selamat Datang di Balai Lelang Tribik - Utamakan Ketertiban dan Keselamatan.
+    <div class="bg-black/50 backdrop-blur-md p-4 rounded-2xl border border-[#D53E0F]/40 text-center font-bold text-sm tracking-wide text-white shadow-xl">
+      ✨ Selamat Datang di Balai Lelang Tribik — Utamakan Ketertiban, Kenyamanan, dan Keselamatan Bersama.
     </div>
-  </div>
+  </footer>
 
   <script>
     const SUPABASE_URL = 'https://oapbpywsvgzegrhfhghn.supabase.co';
@@ -106,17 +140,17 @@
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     let audioEnabled = false;
-    let lastActiveIds = {
-      unit: null,
-      bpkb: null,
-      pelunasan: null
-    };
+    let lastActiveIds = { unit: null, bpkb: null, pelunasan: null };
 
     function enableAudio() {
       audioEnabled = true;
-      document.getElementById('audioOverlay').classList.add('hidden');
-      document.getElementById('audioStatus').innerText = '🔊 Suara Aktif';
-      document.getElementById('audioStatus').className = 'text-xs px-3 py-1 bg-green-600/50 rounded-full font-bold';
+      document.getElementById('audioOverlay').classList.add('opacity-0', 'pointer-events-none');
+      setTimeout(() => document.getElementById('audioOverlay').remove(), 500);
+      
+      const statusEl = document.getElementById('audioStatus');
+      statusEl.className = 'text-xs px-4 py-2 bg-emerald-600/30 border border-emerald-500/40 rounded-full font-bold flex items-center gap-2 backdrop-blur-md text-emerald-300';
+      statusEl.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Suara Aktif';
+      
       bunyiPanggilan('Sistem suara aktif', '');
     }
 
@@ -143,7 +177,6 @@
 
       if (error) return;
 
-      // Reset semua tampilan ke default (menyamakan semuanya ke format kosong)
       document.getElementById('nomorUnit').innerText = '--';
       document.getElementById('namaUnit').innerText = 'Tidak ada antrian';
       document.getElementById('loketUnit').innerText = 'Loket: -';
@@ -179,7 +212,6 @@
         });
       }
 
-      // Validasi dan eksekusi suara secara aman per kategori
       ['unit', 'bpkb', 'pelunasan'].forEach(kat => {
         let activeItem = currentActiveOnServer[kat];
         if (activeItem) {
@@ -195,15 +227,18 @@
       });
     }
 
-    supabaseClient.channel('display-channel')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'reservasi' }, () => {
-        fetchLatestCalled();
-      })
-      .subscribe();
+    try {
+      supabaseClient.channel('display-channel')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'reservasi' }, () => {
+          fetchLatestCalled();
+        })
+        .subscribe();
+    } catch (wsErr) {
+      console.warn('Realtime websocket disabled in sandbox, using polling fallback.', wsErr);
+    }
 
     setInterval(fetchLatestCalled, 2000);
     fetchLatestCalled();
   </script>
 </body>
 </html>
-```[cite: 1]
