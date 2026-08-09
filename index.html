@@ -1,0 +1,35 @@
+<!-- index.html -->
+<form id="formAntrian">
+  <input type="text" id="nama" placeholder="Nama Lengkap" required>
+  <select id="kategori">
+    <option value="unit">Pengambilan Unit</option>
+    <option value="bpkb">Pengambilan BPKB</option>
+    <option value="pelunasan">Pelunasan</option>
+  </select>
+  <button type="submit">Ambil Nomor Antrian</button>
+</form>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const supabase = supabase.createClient('URL_SUPABASE_ANDA', 'API_KEY_ANDA');
+
+  document.getElementById('formAntrian').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    // 1. Buat Nomor Antrian (misal: U-001)
+    const kat = document.getElementById('kategori').value;
+    const nomorBaru = (kat === 'unit' ? 'U-' : kat === 'bpkb' ? 'B-' : 'P-') + Math.floor(100 + Math.random() * 900);
+
+    // 2. Simpan Data ke Database Cloud
+    const { data, error } = await supabase.from('antrian').insert([
+      {
+        nomor_antrian: nomorBaru,
+        nama: document.getElementById('nama').value,
+        kategori: kat,
+        status: 'menunggu'
+      }
+    ]);
+
+    if (!error) alert('Nomor Antrian Anda: ' + nomorBaru);
+  });
+</script>
