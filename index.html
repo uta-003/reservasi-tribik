@@ -1,35 +1,109 @@
-<!-- index.html -->
-<form id="formAntrian">
-  <input type="text" id="nama" placeholder="Nama Lengkap" required>
-  <select id="kategori">
-    <option value="unit">Pengambilan Unit</option>
-    <option value="bpkb">Pengambilan BPKB</option>
-    <option value="pelunasan">Pelunasan</option>
-  </select>
-  <button type="submit">Ambil Nomor Antrian</button>
-</form>
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ambil Antrian - Balai Lelang Tribik</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #5E0006; color: #EED9B9; }
+    .glass-card {
+      background: rgba(155, 15, 6, 0.4);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(238, 217, 185, 0.2);
+    }
+  </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-  const supabase = supabase.createClient('URL_SUPABASE_ANDA', 'API_KEY_ANDA');
+  <div class="w-full max-w-md glass-card rounded-3xl p-6 shadow-2xl space-y-6">
+    <!-- Header -->
+    <div class="text-center space-y-2">
+      <div class="inline-block p-3 rounded-2xl bg-[#9B0F06] border border-[#D53E0F] text-[#EED9B9] font-bold text-xl">
+        TRIBIK
+      </div>
+      <h1 class="text-2xl font-extrabold text-[#EED9B9]">Balai Lelang Tribik</h1>
+      <p class="text-sm opacity-80 text-[#EED9B9]">Ambil Nomor Antrian Pelayanan Online</p>
+    </div>
 
-  document.getElementById('formAntrian').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    // 1. Buat Nomor Antrian (misal: U-001)
-    const kat = document.getElementById('kategori').value;
-    const nomorBaru = (kat === 'unit' ? 'U-' : kat === 'bpkb' ? 'B-' : 'P-') + Math.floor(100 + Math.random() * 900);
+    <!-- Form Input -->
+    <form id="formAntrian" class="space-y-4">
+      <div>
+        <label class="block text-xs font-semibold uppercase tracking-wider mb-2 text-[#EED9B9]">Nama Lengkap</label>
+        <input type="text" id="nama" required placeholder="Masukkan nama Anda" 
+               class="w-full px-4 py-3 rounded-xl bg-[#5E0006]/80 border border-[#D53E0F] text-[#EED9B9] placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#D53E0F]">
+      </div>
 
-    // 2. Simpan Data ke Database Cloud
-    const { data, error } = await supabase.from('antrian').insert([
-      {
-        nomor_antrian: nomorBaru,
-        nama: document.getElementById('nama').value,
-        kategori: kat,
-        status: 'menunggu'
+      <div>
+        <label class="block text-xs font-semibold uppercase tracking-wider mb-2 text-[#EED9B9]">Kategori Layanan</label>
+        <select id="kategori" class="w-full px-4 py-3 rounded-xl bg-[#5E0006] border border-[#D53E0F] text-[#EED9B9] focus:outline-none focus:ring-2 focus:ring-[#D53E0F]">
+          <option value="unit">Pengambilan Unit</option>
+          <option value="bpkb">Pengambilan BPKB</option>
+          <option value="pelunasan">Pelunasan</option>
+        </select>
+      </div>
+
+      <button type="submit" id="btnSubmit" 
+              class="w-full py-4 rounded-xl font-bold bg-[#D53E0F] hover:bg-[#9B0F06] text-[#EED9B9] transition-all duration-200 shadow-lg active:scale-95">
+        Ambil Nomor Antrian
+      </button>
+    </form>
+
+    <!-- Hasil Tiket Antrian -->
+    <div id="ticketResult" class="hidden text-center p-6 bg-[#5E0006] rounded-2xl border border-[#D53E0F] space-y-3">
+      <span class="text-xs font-bold text-[#D53E0F] uppercase tracking-widest">Tiket Antrian Anda</span>
+      <div id="displayNomor" class="text-5xl font-extrabold text-[#EED9B9] tracking-wider">--</div>
+      <div id="displayNama" class="text-lg font-medium text-[#EED9B9]">--</div>
+      <div id="displayKategori" class="text-xs uppercase px-3 py-1 bg-[#9B0F06] rounded-full inline-block text-[#EED9B9]">--</div>
+      <p class="text-xs opacity-75 mt-2">Silakan pantau layar panggilan di ruang tunggu.</p>
+    </div>
+  </div>
+
+  <script>
+    // Koneksi Supabase dengan Alamat & Key Anda
+    const SUPABASE_URL = 'https://oapbpywsvgzegrhfhghn.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_2e3hma5Eo6DXz6_i034kDQ_rQl9lOhK';
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    const form = document.getElementById('formAntrian');
+    const ticketResult = document.getElementById('ticketResult');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const nama = document.getElementById('nama').value;
+      const kategori = document.getElementById('kategori').value;
+
+      // Prefix nomor antrian
+      const prefix = kategori === 'unit' ? 'U' : (kategori === 'bpkb' ? 'B' : 'P');
+      const randomNum = Math.floor(100 + Math.random() * 900);
+      const nomorAntrian = `${prefix}-${randomNum}`;
+
+      document.getElementById('btnSubmit').innerText = 'Memproses...';
+
+      // Simpan ke database Supabase (tabel: reservasi)
+      const { data, error } = await supabaseClient.from('reservasi').insert([
+        {
+          nomor_antrian: nomorAntrian,
+          nama: nama,
+          kategori: kategori,
+          status: 'menunggu'
+        }
+      ]);
+
+      document.getElementById('btnSubmit').innerText = 'Ambil Nomor Antrian';
+
+      if (error) {
+        alert('Gagal mengambil antrian: ' + error.message);
+      } else {
+        document.getElementById('displayNomor').innerText = nomorAntrian;
+        document.getElementById('displayNama').innerText = nama;
+        document.getElementById('displayKategori').innerText = kategori.toUpperCase();
+        ticketResult.classList.remove('hidden');
+        form.reset();
       }
-    ]);
-
-    if (!error) alert('Nomor Antrian Anda: ' + nomorBaru);
-  });
-</script>
+    });
+  </script>
+</body>
+</html>
