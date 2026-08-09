@@ -23,9 +23,17 @@
       0%, 100% { box-shadow: 0 0 25px rgba(213, 62, 15, 0.3); }
       50% { box-shadow: 0 0 45px rgba(213, 62, 15, 0.6); }
     }
+    @keyframes slideIn {
+      from { transform: translateY(100%); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .toast-slide { animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
   </style>
 </head>
 <body class="min-h-screen bg-gradient-to-br from-[#3a0003] via-[#5E0006] to-[#1e0002] text-[#EED9B9] p-6 lg:p-8 flex flex-col justify-between overflow-hidden relative">
+
+  <!-- Toast Container -->
+  <div id="toastContainer" class="fixed bottom-6 right-6 z-50 flex flex-col gap-3 pointer-events-none"></div>
 
   <!-- Glow Orbs -->
   <div class="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-[#D53E0F]/15 rounded-full blur-[120px] pointer-events-none"></div>
@@ -142,6 +150,26 @@
     let audioEnabled = false;
     let lastActiveIds = { unit: null, bpkb: null, pelunasan: null };
 
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = `pointer-events-auto flex items-center gap-3 px-5 py-4 rounded-2xl shadow-2xl backdrop-blur-xl border toast-slide transition-all ${
+        type === 'success' 
+          ? 'bg-emerald-950/90 border-emerald-500/40 text-emerald-200' 
+          : 'bg-red-950/90 border-red-500/40 text-red-200'
+      }`;
+      
+      const icon = type === 'success' ? '🔊' : '⚠️';
+      toast.innerHTML = `<span class="text-lg">${icon}</span> <p class="text-xs font-bold tracking-wide">${message}</p>`;
+      
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(20px)';
+        setTimeout(() => toast.remove(), 300);
+      }, 4000);
+    }
+
     function enableAudio() {
       audioEnabled = true;
       document.getElementById('audioOverlay').classList.add('opacity-0', 'pointer-events-none');
@@ -151,6 +179,7 @@
       statusEl.className = 'text-xs px-4 py-2 bg-emerald-600/30 border border-emerald-500/40 rounded-full font-bold flex items-center gap-2 backdrop-blur-md text-emerald-300';
       statusEl.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Suara Aktif';
       
+      showToast('Sistem suara otomatis berhasil diaktifkan.');
       bunyiPanggilan('Sistem suara aktif', '');
     }
 
