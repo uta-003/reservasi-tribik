@@ -57,17 +57,14 @@
   </div>
 
   <script>
-    // Koneksi Supabase dengan Alamat & Key Anda
     const SUPABASE_URL = 'https://oapbpywsvgzegrhfhghn.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_2e3hma5Eo6DXz6_i034kDQ_rQl9lOhK';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // Jam Digital
     setInterval(() => {
       document.getElementById('clock').innerText = new Date().toLocaleTimeString('id-ID');
     }, 1000);
 
-    // Panggilan Suara Otomatis
     function bunyiPanggilan(nomor, loket) {
       if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
@@ -79,7 +76,6 @@
       }
     }
 
-    // Realtime Listener Supabase
     supabaseClient.channel('display-channel')
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'reservasi' }, (payload) => {
         const dataBaru = payload.new;
