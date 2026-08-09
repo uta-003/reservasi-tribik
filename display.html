@@ -50,7 +50,7 @@
         Nomor Antrian Sedang Dipanggil
       </span>
       <div id="liveNomor" class="text-9xl font-black text-[#EED9B9] tracking-widest my-4">--</div>
-      <div id="liveNama" class="text-2xl font-bold text-[#EED9B9] opacity-80">Menunggu Antrian...</div>
+      <div id="liveNama" class="text-2xl font-bold text-[#EED9B9] opacity-80">Semua Antrian Selesai / Belum Ada Panggilan</div>
       <div id="liveLoket" class="text-4xl font-extrabold text-[#D53E0F]">Silakan Menunggu Panggilan</div>
     </div>
 
@@ -125,7 +125,7 @@
           lastCalledKey = currentKey;
         }
       } else {
-        // PERBAIKAN: Jika antrian kosong/selesai, bersihkan layar TV
+        // Tampilan Pabrik / Netral ketika kosong
         document.getElementById('liveNomor').innerText = '--';
         document.getElementById('liveNama').innerText = 'Semua Antrian Selesai / Belum Ada Panggilan';
         document.getElementById('liveLoket').innerText = 'Silakan Menunggu Panggilan';
@@ -133,14 +133,12 @@
       }
     }
 
-    // Listener Realtime
     supabaseClient.channel('display-channel')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'reservasi' }, () => {
         fetchLatestCalled();
       })
       .subscribe();
 
-    // Fallback sync tiap 2 detik
     setInterval(fetchLatestCalled, 2000);
     fetchLatestCalled();
   </script>
