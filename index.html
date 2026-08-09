@@ -35,9 +35,17 @@
       border-color: #D53E0F;
       box-shadow: 0 0 0 3px rgba(213, 62, 15, 0.3);
     }
+    @keyframes slideIn {
+      from { transform: translateY(100%); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .toast-slide { animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
   </style>
 </head>
 <body class="min-h-screen bg-gradient-to-br from-[#3a0003] via-[#5E0006] to-[#1e0002] text-[#EED9B9] flex items-center justify-center p-4 antialiased relative overflow-hidden">
+
+  <!-- Toast Container -->
+  <div id="toastContainer" class="fixed bottom-6 right-6 z-50 flex flex-col gap-3 pointer-events-none"></div>
 
   <!-- Background Glow Orbs -->
   <div class="absolute -top-32 -left-32 w-96 h-96 bg-[#D53E0F]/20 rounded-full blur-3xl pointer-events-none"></div>
@@ -113,6 +121,26 @@
     const SUPABASE_KEY = 'sb_publishable_2e3hma5Eo6DXz6_i034kDQ_rQl9lOhK';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = `pointer-events-auto flex items-center gap-3 px-5 py-4 rounded-2xl shadow-2xl backdrop-blur-xl border toast-slide transition-all ${
+        type === 'success' 
+          ? 'bg-emerald-950/90 border-emerald-500/40 text-emerald-200' 
+          : 'bg-red-950/90 border-red-500/40 text-red-200'
+      }`;
+      
+      const icon = type === 'success' ? '✨' : '⚠️';
+      toast.innerHTML = `<span class="text-lg">${icon}</span> <p class="text-xs font-bold tracking-wide">${message}</p>`;
+      
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(20px)';
+        setTimeout(() => toast.remove(), 300);
+      }, 4000);
+    }
+
     const form = document.getElementById('formAntrian');
     const ticketResult = document.getElementById('ticketResult');
 
@@ -166,6 +194,7 @@
 
         if (insertError) throw insertError;
 
+        showToast(`Berhasil! Nomor antrian Anda ${nomorAntrian}`);
         document.getElementById('displayNomor').innerText = nomorAntrian;
         document.getElementById('displayNama').innerText = nama;
         document.getElementById('displayKategori').innerText = kategori.toUpperCase();
@@ -175,7 +204,7 @@
 
       } catch (err) {
         console.error(err);
-        alert('Gagal mengambil antrian: ' + err.message);
+        showToast('Gagal mengambil antrian: ' + err.message, 'error');
         btnSubmit.disabled = false;
         btnSubmit.innerText = 'Ambil Nomor Antrian';
       }
